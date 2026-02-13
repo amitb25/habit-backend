@@ -33,6 +33,12 @@ app.use("/api/daily-tasks", dailyTaskRoutes);
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Local development
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Vercel serverless
+module.exports = app;
