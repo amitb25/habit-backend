@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase");
+const { supabase } = require("../config/supabase");
 
 // GET /api/daily-tasks/:profileId?date=YYYY-MM-DD
 const getDailyTasks = async (req, res, next) => {

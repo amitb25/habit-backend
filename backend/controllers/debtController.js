@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase");
+const { supabase } = require("../config/supabase");
 
 // GET /api/debts/:profileId
 const getDebts = async (req, res, next) => {

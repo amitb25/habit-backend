@@ -6,9 +6,12 @@ const profileRoutes = require("./routes/profileRoutes");
 const habitRoutes = require("./routes/habitRoutes");
 const debtRoutes = require("./routes/debtRoutes");
 const dailyTaskRoutes = require("./routes/dailyTaskRoutes");
-// const interviewRoutes = require("./routes/interviewRoutes");
+const financeRoutes = require("./routes/financeRoutes");
+const goalRoutes = require("./routes/goalRoutes");
+const affirmationRoutes = require("./routes/affirmationRoutes");
 const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("./middleware/errorHandler");
+const { runPhase1Migration } = require("./migrations/phase1");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,10 +31,17 @@ app.use("/api/profiles", profileRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/debts", debtRoutes);
 app.use("/api/daily-tasks", dailyTaskRoutes);
-// app.use("/api/interviews", interviewRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api/goals", goalRoutes);
+app.use("/api/affirmations", affirmationRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
+
+// Run migrations
+runPhase1Migration().catch((err) =>
+  console.error("[Migration] Failed:", err.message)
+);
 
 // Local development
 if (process.env.NODE_ENV !== "production") {

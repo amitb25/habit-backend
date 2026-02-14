@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "HustleKit",
+    "slug": "hustlekit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "backgroundColor": "#0a0a0f",
+      "resizeMode": "contain"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0f"
+      },
+      "package": "com.its.aim25.hustlekit"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-splash-screen",
+      [
+        "expo-notifications",
+        {
+          "sounds": [],
+          "color": "#4f8cff"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "googleWebClientId": "342254075468-2hr397kgc8s2jlde2ncd3av5uellmcng.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "04705f68-fe34-414a-80aa-abff2457160c"
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase");
+const { supabase } = require("../config/supabase");
 
 // GET /api/interviews/:profileId
 const getInterviews = async (req, res, next) => {

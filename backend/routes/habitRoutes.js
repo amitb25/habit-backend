@@ -6,8 +6,10 @@ const {
   toggleHabit,
   deleteHabit,
   getHabitLogs,
+  getHabitAnalytics,
 } = require("../controllers/habitController");
 
+router.get("/analytics/:profileId", getHabitAnalytics);
 router.get("/:profileId", getHabits);
 router.post("/", createHabit);
 router.put("/:id/toggle", toggleHabit);
