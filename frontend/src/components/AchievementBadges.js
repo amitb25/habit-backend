@@ -125,4 +125,4 @@ const AchievementBadges = ({ habits, debts }) => {
   );
 };
 
-export default AchievementBadges;
+export default React.memo(AchievementBadges);

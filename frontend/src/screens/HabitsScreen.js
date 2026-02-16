@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
+  FlatList,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -11,7 +12,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useHabits } from "../context/domains/HabitsContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import HabitCard from "../components/HabitCard";
@@ -25,14 +27,8 @@ const categories = [
 ];
 
 const HabitsScreen = ({ navigation }) => {
-  const {
-    user,
-    habits,
-    loadHabits,
-    addHabit,
-    toggleHabitStatus,
-    removeHabit,
-  } = useGlobal();
+  const { user } = useAuth();
+  const { habits, loadHabits, addHabit, toggleHabitStatus, removeHabit } = useHabits();
   const { colors, isDark, glassShadow } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -47,13 +43,13 @@ const HabitsScreen = ({ navigation }) => {
     loadHabits(user.id);
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadHabits(user.id);
     setRefreshing(false);
-  };
+  }, [user.id, loadHabits]);
 
-  const handleAdd = async () => {
+  const handleAdd = useCallback(async () => {
     if (!habitTitle.trim()) {
       setHabitError("Enter a habit name");
       shakeHabitField();
@@ -68,26 +64,28 @@ const HabitsScreen = ({ navigation }) => {
     setHabitTitle("");
     setHabitCategory("dsa");
     setModalVisible(false);
-  };
+  }, [habitTitle, habitCategory, user.id, addHabit, shakeHabitField]);
 
-  const handleDelete = (id, title) => {
+  const handleDelete = useCallback((id, title) => {
     Alert.alert("Delete Habit", `Remove "${title}"?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: () => removeHabit(id) },
     ]);
-  };
+  }, [removeHabit]);
 
   // Filter logic
-  const filteredHabits =
+  const filteredHabits = useMemo(() =>
     filter === "all"
       ? habits
       : filter === "done"
       ? habits.filter((h) => h.is_completed_today)
       : filter === "pending"
       ? habits.filter((h) => !h.is_completed_today)
-      : habits.filter((h) => h.category === filter);
+      : habits.filter((h) => h.category === filter),
+    [habits, filter]
+  );
 
-  const completedToday = habits.filter((h) => h.is_completed_today).length;
+  const completedToday = useMemo(() => habits.filter((h) => h.is_completed_today).length, [habits]);
 
   const filters = [
     { key: "all", label: "All" },
@@ -99,87 +97,98 @@ const HabitsScreen = ({ navigation }) => {
     { key: "english", label: "English" },
   ];
 
+  const renderHabitCard = useCallback(({ item: habit }) => (
+    <HabitCard
+      habit={habit}
+      onToggle={() => toggleHabitStatus(habit.id)}
+      onPress={() => navigation.navigate("HabitDetail", { habitId: habit.id, title: habit.title })}
+      onDelete={() => handleDelete(habit.id, habit.title)}
+    />
+  ), [toggleHabitStatus, handleDelete, navigation]);
+
+  const listHeader = useMemo(() => (
+    <>
+      {/* Stats bar */}
+      <View
+        style={{
+          backgroundColor: colors.glassCard,
+          borderRadius: 16,
+          padding: 18,
+          marginBottom: 18,
+          flexDirection: "row",
+          justifyContent: "space-around",
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+          borderTopWidth: 1,
+          borderTopColor: colors.glassHighlight,
+          ...glassShadow,
+        }}
+      >
+        <View style={{ alignItems: "center", flex: 1 }}>
+          <Text style={{ color: colors.accentBlue, fontSize: 26, fontWeight: "800" }}>{completedToday}</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Done</Text>
+        </View>
+        <View style={{ width: 1, backgroundColor: colors.glassBorderStrong, marginVertical: 4 }} />
+        <View style={{ alignItems: "center", flex: 1 }}>
+          <Text style={{ color: colors.accentRed, fontSize: 26, fontWeight: "800" }}>{habits.length - completedToday}</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Pending</Text>
+        </View>
+        <View style={{ width: 1, backgroundColor: colors.glassBorderStrong, marginVertical: 4 }} />
+        <View style={{ alignItems: "center", flex: 1 }}>
+          <Text style={{ color: colors.accentBlue, fontSize: 26, fontWeight: "800" }}>{habits.length}</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Total</Text>
+        </View>
+      </View>
+
+      {/* Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
+        {filters.map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            onPress={() => setFilter(f.key)}
+            style={{
+              backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
+              paddingHorizontal: 16,
+              paddingVertical: 9,
+              borderRadius: 22,
+              marginRight: 8,
+              borderWidth: filter === f.key ? 0 : 1,
+              borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
+            }}
+          >
+            <Text style={{ color: filter === f.key ? "#ffffff" : colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </>
+  ), [completedToday, habits.length, filter, colors, glassShadow]);
+
+  const listEmpty = useMemo(() => (
+    <View style={{ alignItems: "center", paddingVertical: 48 }}>
+      <Text style={{ fontSize: 44 }}>{"\u{1F4AD}"}</Text>
+      <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>
+        {filter === "all" ? "No habits yet. Create your first one!" : "No habits match this filter"}
+      </Text>
+    </View>
+  ), [filter, colors]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
+      <FlatList
+        data={filteredHabits}
+        keyExtractor={(item) => item.id}
+        renderItem={renderHabitCard}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
-      >
-        {/* Stats bar */}
-        <View
-          style={{
-            backgroundColor: colors.glassCard,
-            borderRadius: 16,
-            padding: 18,
-            marginBottom: 18,
-            flexDirection: "row",
-            justifyContent: "space-around",
-            borderWidth: 1,
-            borderColor: colors.glassBorder,
-            borderTopWidth: 1,
-            borderTopColor: colors.glassHighlight,
-            ...glassShadow,
-          }}
-        >
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: colors.accentBlue, fontSize: 26, fontWeight: "800" }}>{completedToday}</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Done</Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: colors.glassBorderStrong, marginVertical: 4 }} />
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: colors.accentRed, fontSize: 26, fontWeight: "800" }}>{habits.length - completedToday}</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Pending</Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: colors.glassBorderStrong, marginVertical: 4 }} />
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: colors.accentBlue, fontSize: 26, fontWeight: "800" }}>{habits.length}</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>Total</Text>
-          </View>
-        </View>
-
-        {/* Filters */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
-          {filters.map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => setFilter(f.key)}
-              style={{
-                backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
-                paddingHorizontal: 16,
-                paddingVertical: 9,
-                borderRadius: 22,
-                marginRight: 8,
-                borderWidth: filter === f.key ? 0 : 1,
-                borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
-              }}
-            >
-              <Text style={{ color: filter === f.key ? "#ffffff" : colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Habit cards */}
-        {filteredHabits.length === 0 ? (
-          <View style={{ alignItems: "center", paddingVertical: 48 }}>
-            <Text style={{ fontSize: 44 }}>{"\u{1F4AD}"}</Text>
-            <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>
-              {filter === "all" ? "No habits yet. Create your first one!" : "No habits match this filter"}
-            </Text>
-          </View>
-        ) : (
-          filteredHabits.map((habit) => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              onToggle={() => toggleHabitStatus(habit.id)}
-              onPress={() => navigation.navigate("HabitDetail", { habitId: habit.id, title: habit.title })}
-              onDelete={() => handleDelete(habit.id, habit.title)}
-            />
-          ))
-        )}
-      </ScrollView>
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={10}
+      />
 
       {/* Floating Add Button */}
       <TouchableOpacity

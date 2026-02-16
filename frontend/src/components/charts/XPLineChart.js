@@ -83,4 +83,4 @@ const XPLineChart = ({ data = [] }) => {
   );
 };
 
-export default XPLineChart;
+export default React.memo(XPLineChart);

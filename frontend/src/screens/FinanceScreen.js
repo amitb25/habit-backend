@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
+  FlatList,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -12,7 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useFinance } from "../context/domains/FinanceContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import { formatINR, toDateString } from "../utils/helpers";
@@ -44,8 +46,8 @@ const allCategories = [...incomeCategories, ...expenseCategories];
 const getCategoryInfo = (key) => allCategories.find((c) => c.key === key) || { label: key, icon: "\u{1F4B5}" };
 
 const FinanceScreen = () => {
+  const { user } = useAuth();
   const {
-    user,
     transactions,
     financeSummary,
     loadTransactions,
@@ -53,7 +55,7 @@ const FinanceScreen = () => {
     removeTransaction,
     monthlyBudget,
     setMonthlyBudget,
-  } = useGlobal();
+  } = useFinance();
   const { colors, isDark, glassShadow } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -87,11 +89,11 @@ const FinanceScreen = () => {
     loadTransactions(user.id, selectedMonth);
   }, [selectedMonth]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadTransactions(user.id, selectedMonth);
     setRefreshing(false);
-  };
+  }, [user.id, selectedMonth, loadTransactions]);
 
   const changeMonth = (delta) => {
     const [y, m] = selectedMonth.split("-").map(Number);
@@ -145,7 +147,7 @@ const FinanceScreen = () => {
     loadTransactions(user.id, selectedMonth);
   };
 
-  const handleDelete = (id, name) => {
+  const handleDelete = useCallback((id, name) => {
     Alert.alert("Delete", `Remove "${name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -157,7 +159,7 @@ const FinanceScreen = () => {
         },
       },
     ]);
-  };
+  }, [removeTransaction, loadTransactions, user.id, selectedMonth]);
 
   const handleSetBudget = async () => {
     setBudgetError("");
@@ -172,22 +174,22 @@ const FinanceScreen = () => {
     setBudgetModal(false);
   };
 
-  const filteredTx =
+  const filteredTx = useMemo(() =>
     filter === "all"
       ? transactions
-      : transactions.filter((t) => t.type === filter);
+      : transactions.filter((t) => t.type === filter),
+    [filter, transactions]
+  );
 
-  const budgetUsed = monthlyBudget
+  const budgetUsed = useMemo(() => monthlyBudget
     ? Math.min(100, Math.round((financeSummary.total_expense / monthlyBudget) * 100))
-    : 0;
+    : 0,
+    [monthlyBudget, financeSummary.total_expense]
+  );
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
-      >
-        {/* Month Navigation */}
+  const financeHeader = (
+    <>
+      {/* Month Navigation */}
         <View
           style={{
             flexDirection: "row",
@@ -401,85 +403,98 @@ const FinanceScreen = () => {
             </TouchableOpacity>
           )}
         </View>
+      </>
+    );
 
-        {/* Transaction List */}
-        {filteredTx.length === 0 ? (
+    const renderTxItem = useCallback(({ item: tx }) => {
+      const catInfo = getCategoryInfo(tx.category);
+      const isIncome = tx.type === "income";
+      return (
+        <TouchableOpacity
+          onLongPress={() => handleDelete(tx.id, tx.title)}
+          activeOpacity={0.7}
+          style={{
+            backgroundColor: colors.glassCard,
+            borderRadius: 14,
+            padding: 16,
+            marginBottom: 10,
+            flexDirection: "row",
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: colors.glassBorder,
+            borderLeftWidth: 3,
+            borderLeftColor: isIncome ? "#2bb883" : "#e05555",
+            ...glassShadow,
+          }}
+        >
+          {/* Icon */}
+          <View
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              backgroundColor: isIncome ? (isDark ? "#2bb88312" : "#2bb88325") : (isDark ? "#e0555512" : "#e0555525"),
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: 14,
+            }}
+          >
+            <Text style={{ fontSize: 20 }}>{catInfo.icon}</Text>
+          </View>
+
+          {/* Details */}
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: "600" }}>
+              {tx.title}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 }}>
+              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{catInfo.label}</Text>
+              <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
+                {new Date(tx.transaction_date + "T00:00:00").toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </Text>
+            </View>
+          </View>
+
+          {/* Amount */}
+          <Text
+            style={{
+              color: isIncome ? colors.accentGreen : colors.accentRed,
+              fontSize: 16,
+              fontWeight: "700",
+            }}
+          >
+            {isIncome ? "+" : "-"}{formatINR(tx.amount)}
+          </Text>
+        </TouchableOpacity>
+      );
+    }, [handleDelete, colors, isDark, glassShadow]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <FlatList
+        data={filteredTx}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTxItem}
+        ListHeaderComponent={financeHeader}
+        ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 44 }}>{"\u{1F4B8}"}</Text>
             <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>
               No transactions this month
             </Text>
           </View>
-        ) : (
-          filteredTx.map((tx) => {
-            const catInfo = getCategoryInfo(tx.category);
-            const isIncome = tx.type === "income";
-            return (
-              <TouchableOpacity
-                key={tx.id}
-                onLongPress={() => handleDelete(tx.id, tx.title)}
-                activeOpacity={0.7}
-                style={{
-                  backgroundColor: colors.glassCard,
-                  borderRadius: 14,
-                  padding: 16,
-                  marginBottom: 10,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: colors.glassBorder,
-                  borderLeftWidth: 3,
-                  borderLeftColor: isIncome ? "#2bb883" : "#e05555",
-                  ...glassShadow,
-                }}
-              >
-                {/* Icon */}
-                <View
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 12,
-                    backgroundColor: isIncome ? (isDark ? "#2bb88312" : "#2bb88325") : (isDark ? "#e0555512" : "#e0555525"),
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginRight: 14,
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>{catInfo.icon}</Text>
-                </View>
-
-                {/* Details */}
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: "600" }}>
-                    {tx.title}
-                  </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 }}>
-                    <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{catInfo.label}</Text>
-                    <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
-                    <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                      {new Date(tx.transaction_date + "T00:00:00").toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Amount */}
-                <Text
-                  style={{
-                    color: isIncome ? colors.accentGreen : colors.accentRed,
-                    fontSize: 16,
-                    fontWeight: "700",
-                  }}
-                >
-                  {isIncome ? "+" : "-"}{formatINR(tx.amount)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </ScrollView>
+        }
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={15}
+      />
 
       {/* Floating Add Button */}
       <TouchableOpacity

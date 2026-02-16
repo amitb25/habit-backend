@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { fetchHabitLogs } from "../services/api";
-import { useGlobal } from "../context/GlobalContext";
+import { useHabits } from "../context/domains/HabitsContext";
 import { useTheme } from "../context/ThemeContext";
 import { categoryLabels, categoryColors, formatDate } from "../utils/helpers";
 import MonthlyHeatmap from "../components/charts/MonthlyHeatmap";
 
 const HabitDetailScreen = ({ route }) => {
   const { habitId } = route.params;
-  const { habits } = useGlobal();
+  const { habits } = useHabits();
   const { colors, isDark, cardShadow } = useTheme();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);

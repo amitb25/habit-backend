@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -11,7 +11,8 @@ import {
   RefreshControl,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useDebts } from "../context/domains/DebtsContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import DebtCard from "../components/DebtCard";
@@ -19,14 +20,8 @@ import ProgressBar from "../components/ProgressBar";
 import { formatINR, getPercentage } from "../utils/helpers";
 
 const DebtsScreen = ({ navigation }) => {
-  const {
-    user,
-    debts,
-    debtSummary,
-    loadDebts,
-    addDebt,
-    removeDebt,
-  } = useGlobal();
+  const { user } = useAuth();
+  const { debts, debtSummary, loadDebts, addDebt, removeDebt } = useDebts();
   const { colors, isDark, glassShadow } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -47,11 +42,11 @@ const DebtsScreen = ({ navigation }) => {
     loadDebts(user.id);
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadDebts(user.id);
     setRefreshing(false);
-  };
+  }, [user.id, loadDebts]);
 
   const handleAdd = async () => {
     let hasError = false;
@@ -90,7 +85,7 @@ const DebtsScreen = ({ navigation }) => {
     loadDebts(user.id);
   };
 
-  const handleDelete = (id, name) => {
+  const handleDelete = useCallback((id, name) => {
     Alert.alert("Delete Debt", `Remove debt to "${name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -102,113 +97,124 @@ const DebtsScreen = ({ navigation }) => {
         },
       },
     ]);
-  };
+  }, [removeDebt, loadDebts, user.id]);
 
-  const overallPercent = getPercentage(debtSummary.total_paid, debtSummary.total_debt);
-  const activeDebts = debts.filter((d) => !d.is_cleared);
-  const clearedDebts = debts.filter((d) => d.is_cleared);
+  const overallPercent = useMemo(() => getPercentage(debtSummary.total_paid, debtSummary.total_debt), [debtSummary]);
+  const activeDebts = useMemo(() => debts.filter((d) => !d.is_cleared), [debts]);
+  const clearedDebts = useMemo(() => debts.filter((d) => d.is_cleared), [debts]);
 
-  const filteredDebts =
-    filter === "all" ? debts : filter === "active" ? activeDebts : clearedDebts;
+  const filteredDebts = useMemo(() =>
+    filter === "all" ? debts : filter === "active" ? activeDebts : clearedDebts,
+    [filter, debts, activeDebts, clearedDebts]
+  );
+
+  const renderDebtCard = useCallback(({ item: debt }) => (
+    <DebtCard
+      debt={debt}
+      onPress={() => navigation.navigate("DebtDetail", { debtId: debt.id, lender: debt.lender_name })}
+      onDelete={() => handleDelete(debt.id, debt.lender_name)}
+    />
+  ), [handleDelete, navigation]);
+
+  const debtListHeader = useMemo(() => (
+    <>
+      {/* Overall summary */}
+      {debts.length > 0 && (
+        <View
+          style={{
+            backgroundColor: colors.glassCard,
+            borderRadius: 18,
+            padding: 22,
+            marginBottom: 22,
+            borderWidth: 1,
+            borderColor: colors.glassBorder,
+            borderTopWidth: 1,
+            borderTopColor: colors.glassHighlight,
+            ...glassShadow,
+          }}
+        >
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
+            <View>
+              <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Total Debt</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_debt)}</Text>
+            </View>
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Paid</Text>
+              <Text style={{ color: colors.accentGreen, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_paid)}</Text>
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Remaining</Text>
+              <Text style={{ color: colors.accentRed, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_remaining)}</Text>
+            </View>
+          </View>
+          <ProgressBar
+            percentage={overallPercent}
+            color={overallPercent === 100 ? "#2bb883" : "#4078e0"}
+            height={12}
+          />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#e0a820", marginRight: 6 }} />
+              <Text style={{ color: colors.accentYellow, fontSize: 11 }}>{activeDebts.length} active</Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#2bb883", marginRight: 6 }} />
+              <Text style={{ color: colors.accentGreen, fontSize: 11 }}>{clearedDebts.length} cleared</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Filters */}
+      <View style={{ flexDirection: "row", marginBottom: 18, gap: 8 }}>
+        {[
+          { key: "all", label: `All (${debts.length})` },
+          { key: "active", label: `Active (${activeDebts.length})` },
+          { key: "cleared", label: `Cleared (${clearedDebts.length})` },
+        ].map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            onPress={() => setFilter(f.key)}
+            style={{
+              backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
+              paddingHorizontal: 16,
+              paddingVertical: 9,
+              borderRadius: 22,
+              borderWidth: filter === f.key ? 0 : 1,
+              borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
+            }}
+          >
+            <Text style={{ color: filter === f.key ? "#ffffff" : colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
+  ), [debts.length, debtSummary, overallPercent, activeDebts.length, clearedDebts.length, filter, colors, glassShadow]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
-      >
-        {/* Overall summary */}
-        {debts.length > 0 && (
-          <View
-            style={{
-              backgroundColor: colors.glassCard,
-              borderRadius: 18,
-              padding: 22,
-              marginBottom: 22,
-              borderWidth: 1,
-              borderColor: colors.glassBorder,
-              borderTopWidth: 1,
-              borderTopColor: colors.glassHighlight,
-              ...glassShadow,
-            }}
-          >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
-              <View>
-                <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Total Debt</Text>
-                <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_debt)}</Text>
-              </View>
-              <View style={{ alignItems: "center" }}>
-                <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Paid</Text>
-                <Text style={{ color: colors.accentGreen, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_paid)}</Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={{ color: colors.textTertiary, fontSize: 10, letterSpacing: 0.5 }}>Remaining</Text>
-                <Text style={{ color: colors.accentRed, fontSize: 22, fontWeight: "800", marginTop: 2 }}>{formatINR(debtSummary.total_remaining)}</Text>
-              </View>
-            </View>
-            <ProgressBar
-              percentage={overallPercent}
-              color={overallPercent === 100 ? "#2bb883" : "#4078e0"}
-              height={12}
-            />
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#e0a820", marginRight: 6 }} />
-                <Text style={{ color: colors.accentYellow, fontSize: 11 }}>{activeDebts.length} active</Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#2bb883", marginRight: 6 }} />
-                <Text style={{ color: colors.accentGreen, fontSize: 11 }}>{clearedDebts.length} cleared</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Filters */}
-        <View style={{ flexDirection: "row", marginBottom: 18, gap: 8 }}>
-          {[
-            { key: "all", label: `All (${debts.length})` },
-            { key: "active", label: `Active (${activeDebts.length})` },
-            { key: "cleared", label: `Cleared (${clearedDebts.length})` },
-          ].map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => setFilter(f.key)}
-              style={{
-                backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
-                paddingHorizontal: 16,
-                paddingVertical: 9,
-                borderRadius: 22,
-                borderWidth: filter === f.key ? 0 : 1,
-                borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
-              }}
-            >
-              <Text style={{ color: filter === f.key ? "#ffffff" : colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Debt cards */}
-        {filteredDebts.length === 0 ? (
+      <FlatList
+        data={filteredDebts}
+        keyExtractor={(item) => item.id}
+        renderItem={renderDebtCard}
+        ListHeaderComponent={debtListHeader}
+        ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 44 }}>{"\u{1F4B8}"}</Text>
             <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>
               {filter === "all" ? "No debts tracked yet" : `No ${filter} debts`}
             </Text>
           </View>
-        ) : (
-          filteredDebts.map((debt) => (
-            <DebtCard
-              key={debt.id}
-              debt={debt}
-              onPress={() => navigation.navigate("DebtDetail", { debtId: debt.id, lender: debt.lender_name })}
-              onDelete={() => handleDelete(debt.id, debt.lender_name)}
-            />
-          ))
-        )}
-      </ScrollView>
+        }
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={10}
+      />
 
       {/* Floating Add Button */}
       <TouchableOpacity

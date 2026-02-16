@@ -11,7 +11,9 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useProfile } from "../context/domains/ProfileContext";
+import { useTabVisibility } from "../context/domains/TabVisibilityContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import useShake from "../hooks/useShake";
@@ -41,13 +43,9 @@ const TAB_OPTIONS = [
 ];
 
 const SettingsScreen = ({ navigation }) => {
-  const {
-    user,
-    profile,
-    loadProfile,
-    tabVisibility,
-    toggleTabVisibility,
-  } = useGlobal();
+  const { user } = useAuth();
+  const { profile, loadProfile } = useProfile();
+  const { tabVisibility, toggleTabVisibility } = useTabVisibility();
 
   const {
     colors,
@@ -663,7 +661,7 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* Footer */}
         <View style={{ alignItems: "center", paddingVertical: 20 }}>
-          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>HustleKit</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>LifeStack</Text>
           <Text style={{ color: colors.textDim, fontSize: 11, marginTop: 4 }}>Made with dedication</Text>
         </View>
       </ScrollView>

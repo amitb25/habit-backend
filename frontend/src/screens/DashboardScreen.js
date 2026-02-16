@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,11 @@ import {
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useProfile } from "../context/domains/ProfileContext";
+import { useHabits } from "../context/domains/HabitsContext";
+import { useDebts } from "../context/domains/DebtsContext";
+import { useDailyTasks } from "../context/domains/DailyTasksContext";
 import { useTheme } from "../context/ThemeContext";
 import ManifestationBox from "../components/ManifestationBox";
 import DailyQuote from "../components/DailyQuote";
@@ -17,20 +21,11 @@ import { fetchHabitAnalytics } from "../services/api";
 import { getGreeting, formatINR, getPercentage, toDateString } from "../utils/helpers";
 
 const DashboardScreen = ({ navigation, onSwitchTab }) => {
-  const {
-    user,
-    profile,
-    habits,
-    debts,
-    debtSummary,
-    dailyTaskSummary,
-    loading,
-    loadProfile,
-    loadHabits,
-    loadDebts,
-    loadDailyTasks,
-    saveManifestation,
-  } = useGlobal();
+  const { user, loading } = useAuth();
+  const { profile, loadProfile, saveManifestation } = useProfile();
+  const { habits, loadHabits } = useHabits();
+  const { debts, debtSummary, loadDebts } = useDebts();
+  const { dailyTaskSummary, loadDailyTasks } = useDailyTasks();
 
   const { colors, isDark, cardShadow, cardShadowLg, glassShadow, glassShadowLg } = useTheme();
 
@@ -41,7 +36,7 @@ const DashboardScreen = ({ navigation, onSwitchTab }) => {
     if (user?.id) loadAll();
   }, [user]);
 
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     await Promise.all([
       loadProfile(user.id),
       loadHabits(user.id),
@@ -53,26 +48,37 @@ const DashboardScreen = ({ navigation, onSwitchTab }) => {
       const res = await fetchHabitAnalytics(user.id);
       setAnalyticsData(res.data.data);
     } catch (_) {}
-  };
+  }, [user.id, loadProfile, loadHabits, loadDebts, loadDailyTasks]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadAll();
     setRefreshing(false);
-  };
+  }, [loadAll]);
 
-  const completedToday = habits.filter((h) => h.is_completed_today).length;
-  const totalHabits = habits.length;
-  const habitPercent = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
-  const bestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.current_streak)) : 0;
-  const overallDebtPercent = getPercentage(debtSummary.total_paid, debtSummary.total_debt);
-  const activeDebts = debts.filter((d) => !d.is_cleared).length;
-  const totalStreakDays = habits.reduce((sum, h) => sum + h.current_streak, 0);
-  const taskTotal = dailyTaskSummary.total;
-  const taskDone = dailyTaskSummary.completed;
-  const taskPending = dailyTaskSummary.pending;
-  const taskPercent = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
-  const taskAllDone = taskTotal > 0 && taskDone === taskTotal;
+  const habitStats = useMemo(() => {
+    const completedToday = habits.filter((h) => h.is_completed_today).length;
+    const totalHabits = habits.length;
+    const habitPercent = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
+    const bestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.current_streak)) : 0;
+    const totalStreakDays = habits.reduce((sum, h) => sum + h.current_streak, 0);
+    return { completedToday, totalHabits, habitPercent, bestStreak, totalStreakDays };
+  }, [habits]);
+
+  const overallDebtPercent = useMemo(() => getPercentage(debtSummary.total_paid, debtSummary.total_debt), [debtSummary]);
+  const activeDebts = useMemo(() => debts.filter((d) => !d.is_cleared).length, [debts]);
+
+  const taskStats = useMemo(() => {
+    const taskTotal = dailyTaskSummary.total;
+    const taskDone = dailyTaskSummary.completed;
+    const taskPending = dailyTaskSummary.pending;
+    const taskPercent = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
+    const taskAllDone = taskTotal > 0 && taskDone === taskTotal;
+    return { taskTotal, taskDone, taskPending, taskPercent, taskAllDone };
+  }, [dailyTaskSummary]);
+
+  const { completedToday, totalHabits, habitPercent, bestStreak, totalStreakDays } = habitStats;
+  const { taskTotal, taskDone, taskPending, taskPercent, taskAllDone } = taskStats;
 
   if (loading && !refreshing && !profile) {
     return (

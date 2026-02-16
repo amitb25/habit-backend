@@ -73,4 +73,4 @@ const WeeklyBarChart = ({ data = [] }) => {
   );
 };
 
-export default WeeklyBarChart;
+export default React.memo(WeeklyBarChart);

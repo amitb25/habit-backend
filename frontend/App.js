@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, Image, TouchableOpacity, Dimensions } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
@@ -7,9 +7,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Video, ResizeMode } from "expo-av";
 import * as SplashScreen from "expo-splash-screen";
-import { GlobalProvider, useGlobal } from "./src/context/GlobalContext";
+import { useProfile } from "./src/context/domains/ProfileContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { ToastProvider } from "./src/context/ToastContext";
+import {
+  AuthProvider,
+  ProfileProvider,
+  HabitsProvider,
+  DebtsProvider,
+  DailyTasksProvider,
+  FinanceProvider,
+  GoalsProvider,
+  AffirmationsProvider,
+  TabVisibilityProvider,
+} from "./src/context/domains";
 import Toast from "./src/components/Toast";
 import LevelUpModal from "./src/components/LevelUpModal";
 
@@ -52,7 +63,7 @@ function MainNavigator() {
 }
 
 function AppWithGamification() {
-  const { levelUpInfo, dismissLevelUp } = useGlobal();
+  const { levelUpInfo, dismissLevelUp } = useProfile();
   const { colors } = useTheme();
 
   return (
@@ -104,12 +115,11 @@ function CustomSplash({ onFinish }) {
           alignItems: "center",
         }}
       >
-        <Text style={{ color: "#ffffff", fontSize: 28, fontWeight: "900", letterSpacing: 1 }}>
-          HustleKit
-        </Text>
-        <Text style={{ color: "#ffffff80", fontSize: 12, marginTop: 6, letterSpacing: 0.5 }}>
-          Hustle Every Day
-        </Text>
+        <Image
+          source={require("./assets/logo.png")}
+          style={{ width: 180, height: 80 }}
+          resizeMode="contain"
+        />
       </View>
     </View>
   );
@@ -139,6 +149,13 @@ function AppContent() {
   };
 
   const handleLogout = async () => {
+    // Clear Google Sign-In session so account picker shows next time
+    try {
+      const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+      await GoogleSignin.signOut();
+    } catch (e) {
+      // Google Sign-In not available (Expo Go) — ignore
+    }
     setUser(null);
     await AsyncStorage.removeItem("hustlekit_user");
   };
@@ -151,27 +168,11 @@ function AppContent() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }}>
         <StatusBar style={colors.statusBarStyle} />
-        <View
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 24,
-            backgroundColor: "#4f8cff12",
-            justifyContent: "center",
-            alignItems: "center",
-            borderWidth: 1,
-            borderColor: "#4f8cff25",
-            marginBottom: 20,
-          }}
-        >
-          <Text style={{ fontSize: 40 }}>{"\u{1F525}"}</Text>
-        </View>
-        <Text style={{ color: colors.textPrimary, fontSize: 32, fontWeight: "900", letterSpacing: 1 }}>
-          HustleKit
-        </Text>
-        <Text style={{ color: colors.textTertiary, fontSize: 13, marginTop: 8, letterSpacing: 0.5 }}>
-          Track. Grind. Level Up.
-        </Text>
+        <Image
+          source={require("./assets/logo.png")}
+          style={{ width: 220, height: 100 }}
+          resizeMode="contain"
+        />
       </View>
     );
   }
@@ -186,9 +187,25 @@ function AppContent() {
   }
 
   return (
-    <GlobalProvider user={user} onLogout={handleLogout}>
-      <AppWithGamification />
-    </GlobalProvider>
+    <AuthProvider user={user} onLogout={handleLogout}>
+      <TabVisibilityProvider>
+        <ProfileProvider>
+          <HabitsProvider>
+            <DebtsProvider>
+              <DailyTasksProvider>
+                <FinanceProvider>
+                  <GoalsProvider>
+                    <AffirmationsProvider>
+                      <AppWithGamification />
+                    </AffirmationsProvider>
+                  </GoalsProvider>
+                </FinanceProvider>
+              </DailyTasksProvider>
+            </DebtsProvider>
+          </HabitsProvider>
+        </ProfileProvider>
+      </TabVisibilityProvider>
+    </AuthProvider>
   );
 }
 

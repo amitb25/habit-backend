@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { fetchPayments } from "../services/api";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useDebts } from "../context/domains/DebtsContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import ProgressBar from "../components/ProgressBar";
@@ -17,7 +18,8 @@ import { formatINR, getPercentage, formatDate } from "../utils/helpers";
 
 const DebtDetailScreen = ({ route }) => {
   const { debtId } = route.params;
-  const { user, debts, payDebt } = useGlobal();
+  const { user } = useAuth();
+  const { debts, payDebt } = useDebts();
   const { colors } = useTheme();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);

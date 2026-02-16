@@ -116,4 +116,4 @@ const MonthlyHeatmap = ({ data = [] }) => {
   );
 };
 
-export default MonthlyHeatmap;
+export default React.memo(MonthlyHeatmap);

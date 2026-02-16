@@ -144,4 +144,4 @@ const DailyTaskCard = ({ task, onToggle, onDelete }) => {
   );
 };
 
-export default DailyTaskCard;
+export default React.memo(DailyTaskCard);

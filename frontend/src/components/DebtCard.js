@@ -97,4 +97,4 @@ const DebtCard = ({ debt, onPress, onDelete }) => {
   );
 };
 
-export default DebtCard;
+export default React.memo(DebtCard);

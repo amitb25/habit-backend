@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Platform, StatusBar, Image } from "react-native";
+import React, { useEffect, useState, useMemo } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Platform, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobal } from "../context/GlobalContext";
+import { Image } from "expo-image";
+import { useAuth } from "../context/domains/AuthContext";
+import { useProfile } from "../context/domains/ProfileContext";
+import { useHabits } from "../context/domains/HabitsContext";
+import { useDebts } from "../context/domains/DebtsContext";
 import { useTheme } from "../context/ThemeContext";
 import ProgressBar from "../components/ProgressBar";
 import WeeklyBarChart from "../components/charts/WeeklyBarChart";
@@ -13,7 +17,10 @@ import { formatINR, getPercentage, categoryLabels, categoryColors } from "../uti
 
 const WeeklyReportScreen = ({ navigation }) => {
   const { colors, isDark, cardShadow } = useTheme();
-  const { user, profile, habits, debts, debtSummary } = useGlobal();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { habits } = useHabits();
+  const { debts, debtSummary } = useDebts();
   const [analyticsData, setAnalyticsData] = useState(null);
 
   useEffect(() => {
@@ -24,43 +31,52 @@ const WeeklyReportScreen = ({ navigation }) => {
     }
   }, [user]);
 
-  const completedToday = habits.filter((h) => h.is_completed_today).length;
-  const totalHabits = habits.length;
-  const totalCompletions = habits.reduce((sum, h) => sum + h.total_completions, 0);
-  const bestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.longest_streak)) : 0;
-  const avgStreak = habits.length > 0
-    ? Math.round(habits.reduce((sum, h) => sum + h.current_streak, 0) / habits.length)
-    : 0;
+  const reportStats = useMemo(() => {
+    const completedToday = habits.filter((h) => h.is_completed_today).length;
+    const totalHabits = habits.length;
+    const totalCompletions = habits.reduce((sum, h) => sum + h.total_completions, 0);
+    const bestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.longest_streak)) : 0;
+    const avgStreak = habits.length > 0
+      ? Math.round(habits.reduce((sum, h) => sum + h.current_streak, 0) / habits.length)
+      : 0;
+    return { completedToday, totalHabits, totalCompletions, bestStreak, avgStreak };
+  }, [habits]);
 
-  const overallDebtPercent = getPercentage(debtSummary.total_paid, debtSummary.total_debt);
+  const { completedToday, totalHabits, totalCompletions, bestStreak, avgStreak } = reportStats;
 
-  // Calculate score (out of 100)
-  const habitScore = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 40) : 0;
-  const streakScore = Math.min(30, avgStreak * 5);
-  const debtScore = Math.round(overallDebtPercent * 0.2);
-  const totalScore = Math.min(100, habitScore + streakScore + debtScore);
+  const overallDebtPercent = useMemo(() => getPercentage(debtSummary.total_paid, debtSummary.total_debt), [debtSummary]);
 
-  const getGrade = (score) => {
-    if (score >= 90) return { grade: "A+", color: "#1eac50", msg: "LEGENDARY! Keep dominating!" };
-    if (score >= 75) return { grade: "A", color: "#4078e0", msg: "Outstanding work! Almost perfect!" };
-    if (score >= 60) return { grade: "B+", color: "#4078e0", msg: "Great progress! Push harder!" };
-    if (score >= 40) return { grade: "B", color: "#e0a820", msg: "Good start. Stay consistent!" };
-    if (score >= 20) return { grade: "C", color: "#e06612", msg: "Keep going. Build momentum!" };
-    return { grade: "D", color: "#e05555", msg: "Time to level up! Start today!" };
-  };
+  const { totalScore, gradeInfo, habitScore, streakScore, debtScore } = useMemo(() => {
+    const hScore = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 40) : 0;
+    const sScore = Math.min(30, avgStreak * 5);
+    const dScore = Math.round(overallDebtPercent * 0.2);
+    const score = Math.min(100, hScore + sScore + dScore);
 
-  const gradeInfo = getGrade(totalScore);
+    const getGrade = (s) => {
+      if (s >= 90) return { grade: "A+", color: "#1eac50", msg: "LEGENDARY! Keep dominating!" };
+      if (s >= 75) return { grade: "A", color: "#4078e0", msg: "Outstanding work! Almost perfect!" };
+      if (s >= 60) return { grade: "B+", color: "#4078e0", msg: "Great progress! Push harder!" };
+      if (s >= 40) return { grade: "B", color: "#e0a820", msg: "Good start. Stay consistent!" };
+      if (s >= 20) return { grade: "C", color: "#e06612", msg: "Keep going. Build momentum!" };
+      return { grade: "D", color: "#e05555", msg: "Time to level up! Start today!" };
+    };
+
+    return { totalScore: score, gradeInfo: getGrade(score), habitScore: hScore, streakScore: sScore, debtScore: dScore };
+  }, [completedToday, totalHabits, avgStreak, overallDebtPercent]);
 
   // Category breakdown
-  const categoryBreakdown = {};
-  habits.forEach((h) => {
-    if (!categoryBreakdown[h.category]) {
-      categoryBreakdown[h.category] = { total: 0, completed: 0, streaks: 0 };
-    }
-    categoryBreakdown[h.category].total++;
-    if (h.is_completed_today) categoryBreakdown[h.category].completed++;
-    categoryBreakdown[h.category].streaks += h.current_streak;
-  });
+  const categoryBreakdown = useMemo(() => {
+    const breakdown = {};
+    habits.forEach((h) => {
+      if (!breakdown[h.category]) {
+        breakdown[h.category] = { total: 0, completed: 0, streaks: 0 };
+      }
+      breakdown[h.category].total++;
+      if (h.is_completed_today) breakdown[h.category].completed++;
+      breakdown[h.category].streaks += h.current_streak;
+    });
+    return breakdown;
+  }, [habits]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -88,7 +104,7 @@ const WeeklyReportScreen = ({ navigation }) => {
             </TouchableOpacity>
             {profile?.avatar_url ? (
               <Image
-                source={{ uri: profile.avatar_url }}
+                source={profile.avatar_url}
                 style={{
                   width: 38,
                   height: 38,
@@ -97,6 +113,8 @@ const WeeklyReportScreen = ({ navigation }) => {
                   borderWidth: 1,
                   borderColor: "#84643830",
                 }}
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <View
@@ -265,46 +283,6 @@ const WeeklyReportScreen = ({ navigation }) => {
 
     </ScrollView>
 
-      {/* Floating Bottom Bar */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: Platform.OS === "ios" ? 28 : 14,
-          left: 0,
-          right: 0,
-          alignItems: "center",
-        }}
-        pointerEvents="box-none"
-      >
-        <View
-          style={{
-            backgroundColor: colors.floatingBarBg,
-            borderRadius: 24,
-            paddingVertical: 10,
-            paddingHorizontal: 40,
-            borderWidth: 1,
-            borderColor: colors.glassBorderStrong,
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.navigate("HomeMain")}
-            activeOpacity={0.8}
-          >
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: colors.floatingButtonBg,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Ionicons name="home" size={22} color={colors.textPrimary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
     </View>
   );
 };

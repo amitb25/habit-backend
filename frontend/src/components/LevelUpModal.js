@@ -92,4 +92,4 @@ const LevelUpModal = ({ visible, level, onDismiss }) => {
   );
 };
 
-export default LevelUpModal;
+export default React.memo(LevelUpModal);

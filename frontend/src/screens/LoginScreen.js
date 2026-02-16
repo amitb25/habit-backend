@@ -5,21 +5,31 @@ import {
   TextInput,
   TouchableOpacity,
   Animated,
+  Image,
   ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  StatusBar,
 } from "react-native";
 import { loginUser, signupUser, googleLogin } from "../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import useShake from "../hooks/useShake";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
 import Constants from "expo-constants";
+import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
+
+// Google Sign-In requires native build — gracefully disable in Expo Go
+let GoogleSignin = null;
+let statusCodes = {};
+try {
+  const gsi = require("@react-native-google-signin/google-signin");
+  GoogleSignin = gsi.GoogleSignin;
+  statusCodes = gsi.statusCodes;
+} catch (e) {
+  // Native module not available (Expo Go) — Google Sign-In will be disabled
+}
 
 const LoginScreen = ({ onLogin }) => {
   const { colors } = useTheme();
@@ -42,15 +52,23 @@ const LoginScreen = ({ onLogin }) => {
   const { shakeAnim: passwordShake, triggerShake: shakePasswordField } = useShake();
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    });
+    if (GoogleSignin) {
+      GoogleSignin.configure({
+        webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+      });
+    }
   }, []);
 
   const handleGoogleSignIn = async () => {
+    if (!GoogleSignin) {
+      showToast("Google Sign-In not available in Expo Go. Use a development build.", "error");
+      return;
+    }
     setGoogleLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
+      // Clear previous session so account picker always shows
+      try { await GoogleSignin.signOut(); } catch (_) {}
       await GoogleSignin.signIn();
       const { idToken } = await GoogleSignin.getTokens();
       const res = await googleLogin(idToken);
@@ -117,35 +135,25 @@ const LoginScreen = ({ onLogin }) => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={{ flex: 1, justifyContent: "center", padding: 28 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          padding: 28,
+          paddingTop: (StatusBar.currentHeight || 44) + 16,
+        }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {/* Logo / Branding */}
         <View style={{ alignItems: "center", marginBottom: 48 }}>
-          <View
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 24,
-              backgroundColor: "#4078e012",
-              justifyContent: "center",
-              alignItems: "center",
-              borderWidth: 1,
-              borderColor: "#4078e025",
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ fontSize: 40 }}>{"\u{1F525}"}</Text>
-          </View>
-          <Text style={{ color: colors.textPrimary, fontSize: 34, fontWeight: "900", letterSpacing: 1 }}>
-            HustleKit
-          </Text>
-          <Text style={{ color: colors.textTertiary, fontSize: 14, marginTop: 8, letterSpacing: 0.5 }}>
-            Track. Grind. Level Up.
-          </Text>
+          <Image
+            source={require("../../assets/logo.png")}
+            style={{ width: 220, height: 100 }}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Form card */}
@@ -281,6 +289,7 @@ const LoginScreen = ({ onLogin }) => {
           <TouchableOpacity
             onPress={handleGoogleSignIn}
             disabled={googleLoading}
+            activeOpacity={0.7}
             style={{
               backgroundColor: colors.glassCard,
               borderRadius: 16,
@@ -298,7 +307,19 @@ const LoginScreen = ({ onLogin }) => {
               <ActivityIndicator color={colors.textSecondary} />
             ) : (
               <>
-                <Text style={{ fontSize: 20, marginRight: 10 }}>G</Text>
+                <Svg width={20} height={20} viewBox="0 0 16 16" style={{ marginRight: 10 }}>
+                  <G clipPath="url(#googleClip)">
+                    <Path d="M8 3.167c1.18 0 2.237.406 3.07 1.2l2.284-2.284C11.967.793 10.157 0 8 0 4.873 0 2.17 1.793.854 4.407L3.514 6.47C4.143 4.573 5.913 3.167 8 3.167z" fill="#EA4335" />
+                    <Path d="M15.66 8.183c0-.523-.05-1.03-.127-1.516H8v3.006h4.313c-.193.987-.753 1.827-1.593 2.394l2.577 2L14.8 12.673c1.504-1.393 2.36-3.453 2.36-5.88-.003.003-.5.39.5-.61z" fill="#4285F4" />
+                    <Path d="M3.51 9.53a4.84 4.84 0 01-.253-1.53c0-.533.09-1.047.253-1.53L.85 4.407A8.004 8.004 0 000 8c0 1.293.307 2.513.853 3.593L3.51 9.53z" fill="#FBBC05" />
+                    <Path d="M8 16c2.16 0 3.977-.71 5.297-1.937l-2.577-2c-.717.483-1.64.767-2.72.767-2.087 0-3.857-1.407-4.49-3.303L.85 11.59C2.17 14.207 4.873 16 8 16z" fill="#34A853" />
+                  </G>
+                  <Defs>
+                    <ClipPath id="googleClip">
+                      <Rect width={16} height={16} fill="white" />
+                    </ClipPath>
+                  </Defs>
+                </Svg>
                 <Text style={{ color: colors.textPrimary, fontWeight: "600", fontSize: 15 }}>
                   Continue with Google
                 </Text>
@@ -322,7 +343,7 @@ const LoginScreen = ({ onLogin }) => {
 
         {/* Footer */}
         <Text style={{ color: colors.textDim, fontSize: 11, textAlign: "center", marginTop: 36 }}>
-          HustleKit v1.0.0
+          LifeStack v1.0.0
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

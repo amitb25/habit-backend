@@ -13,7 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useDailyTasks } from "../context/domains/DailyTasksContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import DailyTaskCard from "./DailyTaskCard";
@@ -35,15 +36,8 @@ const CATEGORIES = Object.keys(taskCategoryLabels);
 const PRIORITIES = Object.keys(priorityConfig);
 
 const DailyTaskSheet = () => {
-  const {
-    user,
-    dailyTasks,
-    dailyTaskSummary,
-    loadDailyTasks,
-    addDailyTask,
-    toggleDailyTaskStatus,
-    removeDailyTask,
-  } = useGlobal();
+  const { user } = useAuth();
+  const { dailyTasks, dailyTaskSummary, loadDailyTasks, addDailyTask, toggleDailyTaskStatus, removeDailyTask } = useDailyTasks();
   const { colors, glassShadow } = useTheme();
 
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()));

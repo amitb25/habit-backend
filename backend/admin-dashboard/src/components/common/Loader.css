@@ -1,0 +1,86 @@
+.loader-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 24px;
+}
+
+.loader-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  object-fit: contain;
+  animation: logoPulse 2s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.loader-text {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.svg-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg-frame svg {
+  position: absolute;
+  width: 344px;
+  height: 344px;
+  transform-origin: center center;
+}
+
+.svg-frame svg:nth-child(1) { fill: none; stroke: #00FFFF; stroke-width: 0.5; }
+.svg-frame svg:nth-child(2) { fill: #00FFFF; }
+.svg-frame svg:nth-child(3) { fill: none; stroke: #00FFFF; stroke-width: 0.5; }
+.svg-frame svg:nth-child(4) { fill: #00FFFF; }
+.svg-frame svg:nth-child(5) { fill: #00FFFF; }
+
+#out2 {
+  animation: rotate16 7s linear infinite;
+  transform-origin: 172px 172px;
+}
+
+#out3 {
+  animation: rotate16 3s linear infinite reverse;
+  transform-origin: 172px 172px;
+}
+
+#inner3 {
+  animation: rotate16 4s linear infinite;
+  transform-origin: 172px 172px;
+}
+
+#inner1 {
+  animation: rotate16 4s linear infinite reverse;
+  transform-origin: 172px 172px;
+}
+
+#center1 {
+  animation: rotate16 2s linear infinite;
+  transform-origin: 172px 172px;
+}
+
+@keyframes rotate16 {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Modal,
+  Dimensions,
 } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../context/ThemeContext";
-import { exerciseData, workoutPlans } from "../data/exercises";
+import { exerciseData, workoutPlans, exerciseVideos } from "../data/exercises";
 import ProgressBar from "../components/ProgressBar";
 import { getPercentage } from "../utils/helpers";
 
@@ -30,6 +32,8 @@ const ExercisesScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [levelFilter, setLevelFilter] = useState("all");
+  const [videoExercise, setVideoExercise] = useState(null);
+  const videoRef = useRef(null);
 
   // Daily tracking
   const [completedToday, setCompletedToday] = useState({});
@@ -377,6 +381,22 @@ const ExercisesScreen = () => {
                         {ex.sets} sets x {ex.reps} | Rest: {ex.rest}
                       </Text>
                     </View>
+                    {exerciseVideos[ex.name] && (
+                      <TouchableOpacity
+                        onPress={(e) => { e.stopPropagation(); setVideoExercise(ex.name); }}
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          backgroundColor: "#e0555520",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginLeft: 8,
+                        }}
+                      >
+                        <Text style={{ color: "#e05555", fontSize: 14 }}>{"\u25B6"}</Text>
+                      </TouchableOpacity>
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -470,7 +490,25 @@ const ExercisesScreen = () => {
                           ...cardShadow,
                         }}
                       >
-                        <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: "600" }}>{ex.name}</Text>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: "600", flex: 1 }}>{ex.name}</Text>
+                          {exerciseVideos[ex.name] && (
+                            <TouchableOpacity
+                              onPress={() => setVideoExercise(ex.name)}
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 18,
+                                backgroundColor: "#e0555520",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                marginLeft: 10,
+                              }}
+                            >
+                              <Text style={{ color: "#e05555", fontSize: 16 }}>{"\u25B6"}</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
                         <View style={{ flexDirection: "row", marginTop: 8, gap: 12 }}>
                           <View style={{ backgroundColor: "#4078e012", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                             <Text style={{ color: colors.accentBlue, fontSize: 12 }}>{ex.sets} sets</Text>
@@ -491,6 +529,60 @@ const ExercisesScreen = () => {
                 );
               })}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* VIDEO PLAYER MODAL */}
+      <Modal
+        visible={!!videoExercise}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {
+          if (videoRef.current) videoRef.current.stopAsync();
+          setVideoExercise(null);
+        }}
+      >
+        <View style={{ flex: 1, backgroundColor: "#000000ee", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ width: Dimensions.get("window").width, height: Dimensions.get("window").height * 0.5, backgroundColor: "#000", borderRadius: 20, overflow: "hidden" }}>
+            {/* Header */}
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
+              <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "700", flex: 1 }}>
+                {videoExercise}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (videoRef.current) videoRef.current.stopAsync();
+                  setVideoExercise(null);
+                }}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: "#ffffff20",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginLeft: 12,
+                }}
+              >
+                <Text style={{ color: "#ffffff", fontSize: 18 }}>{"\u2715"}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Video */}
+            <View style={{ flex: 1 }}>
+              {videoExercise && exerciseVideos[videoExercise] && (
+                <Video
+                  ref={videoRef}
+                  source={exerciseVideos[videoExercise]}
+                  style={{ flex: 1 }}
+                  resizeMode={ResizeMode.CONTAIN}
+                  shouldPlay
+                  useNativeControls
+                  isLooping
+                />
+              )}
+            </View>
           </View>
         </View>
       </Modal>

@@ -8,15 +8,19 @@ import {
   Alert,
   Animated,
   RefreshControl,
-  Image,
   ActivityIndicator,
   Platform,
   StatusBar,
   Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useProfile } from "../context/domains/ProfileContext";
+import { useHabits } from "../context/domains/HabitsContext";
+import { useDebts } from "../context/domains/DebtsContext";
+import { useTabVisibility } from "../context/domains/TabVisibilityContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import useShake from "../hooks/useShake";
@@ -25,22 +29,11 @@ import { formatINR, getPercentage } from "../utils/helpers";
 import AchievementBadges from "../components/AchievementBadges";
 
 const ProfileScreen = ({ navigation }) => {
-  const {
-    user,
-    onLogout,
-    profile,
-    habits,
-    debts,
-    debtSummary,
-    loadProfile,
-    loadHabits,
-    loadDebts,
-    saveManifestation,
-    uploadAvatar,
-    updateNotificationSettings,
-    tabVisibility,
-    toggleTabVisibility,
-  } = useGlobal();
+  const { user, onLogout } = useAuth();
+  const { profile, loadProfile, saveManifestation, uploadAvatar, updateNotificationSettings } = useProfile();
+  const { habits, loadHabits } = useHabits();
+  const { debts, debtSummary, loadDebts } = useDebts();
+  const { tabVisibility, toggleTabVisibility } = useTabVisibility();
 
   const { colors, isDark, toggleTheme } = useTheme();
   const { showToast } = useToast();
@@ -169,7 +162,7 @@ const ProfileScreen = ({ navigation }) => {
             </TouchableOpacity>
             {profile?.avatar_url ? (
               <Image
-                source={{ uri: profile.avatar_url }}
+                source={profile.avatar_url}
                 style={{
                   width: 38,
                   height: 38,
@@ -178,6 +171,8 @@ const ProfileScreen = ({ navigation }) => {
                   borderWidth: 1,
                   borderColor: "#84643830",
                 }}
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <View
@@ -256,8 +251,10 @@ const ProfileScreen = ({ navigation }) => {
               <ActivityIndicator size="large" color="#4078e0" />
             ) : profile?.avatar_url ? (
               <Image
-                source={{ uri: profile.avatar_url }}
+                source={profile.avatar_url}
                 style={{ width: 84, height: 84 }}
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <Ionicons name="person" size={38} color="#4078e0" />
@@ -460,311 +457,15 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Notification Settings */}
-      <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: "700", marginBottom: 14, letterSpacing: 0.3 }}>
-        {"\u{1F514}"} Notifications
-      </Text>
-      <View
-        style={{
-          backgroundColor: colors.glassCardAlt,
-          borderRadius: 18,
-          padding: 20,
-          marginBottom: 24,
-          borderWidth: 1,
-          borderColor: colors.glassBorderLight,
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: "#4078e012", justifyContent: "center", alignItems: "center" }}>
-              <Text style={{ fontSize: 18 }}>{"\u{1F514}"}</Text>
-            </View>
-            <View>
-              <Text style={{ color: colors.textSubtitle, fontSize: 15, fontWeight: "600" }}>Daily Reminder</Text>
-              <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 2 }}>
-                {notificationsEnabled ? `Active at ${reminderTime}` : "Disabled"}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={(val) => {
-              setNotificationsEnabled(val);
-              updateNotificationSettings(user.id, val, reminderTime);
-            }}
-            trackColor={{ false: colors.switchTrackOff, true: "#4078e050" }}
-            thumbColor={notificationsEnabled ? "#4078e0" : "#6b7280"}
-          />
-        </View>
-        {notificationsEnabled && (
-          <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.glassBorder }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 12 }}>Reminder Time</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              {/* Hour Input */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor: colors.glassCard,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.glassBorderStrong,
-                  paddingHorizontal: 12,
-                }}
-              >
-                <TextInput
-                  value={(() => {
-                    const h24 = parseInt(reminderTime.split(":")[0]) || 0;
-                    const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
-                    return String(h12).padStart(2, "0");
-                  })()}
-                  onChangeText={(text) => {
-                    const clean = text.replace(/[^0-9]/g, "").substring(0, 2);
-                    const h12 = parseInt(clean) || 0;
-                    if (h12 > 12) return;
-                    const currentH24 = parseInt(reminderTime.split(":")[0]) || 0;
-                    const isPM = currentH24 >= 12;
-                    let h24 = h12;
-                    if (isPM) h24 = h12 === 12 ? 12 : h12 + 12;
-                    else h24 = h12 === 12 ? 0 : h12;
-                    const min = reminderTime.split(":")[1] || "00";
-                    setReminderTime(String(h24).padStart(2, "0") + ":" + min);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  style={{
-                    color: colors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: "800",
-                    paddingVertical: 10,
-                    width: 36,
-                    textAlign: "center",
-                  }}
-                />
-              </View>
-
-              <Text style={{ color: "#4078e0", fontSize: 22, fontWeight: "800" }}>:</Text>
-
-              {/* Minute Input */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor: colors.glassCard,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.glassBorderStrong,
-                  paddingHorizontal: 12,
-                }}
-              >
-                <TextInput
-                  value={reminderTime.split(":")[1] || "00"}
-                  onChangeText={(text) => {
-                    let clean = text.replace(/[^0-9]/g, "").substring(0, 2);
-                    if (parseInt(clean) > 59) return;
-                    const hour = reminderTime.split(":")[0] || "08";
-                    setReminderTime(hour + ":" + clean);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  style={{
-                    color: colors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: "800",
-                    paddingVertical: 10,
-                    width: 36,
-                    textAlign: "center",
-                  }}
-                />
-              </View>
-
-              {/* AM/PM Toggle */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  backgroundColor: colors.glassCard,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.glassBorderStrong,
-                  overflow: "hidden",
-                }}
-              >
-                {["AM", "PM"].map((period) => {
-                  const currentH24 = parseInt(reminderTime.split(":")[0]) || 0;
-                  const isActive = period === "AM" ? currentH24 < 12 : currentH24 >= 12;
-                  return (
-                    <TouchableOpacity
-                      key={period}
-                      onPress={() => {
-                        const h24 = parseInt(reminderTime.split(":")[0]) || 0;
-                        const min = reminderTime.split(":")[1] || "00";
-                        let newH;
-                        if (period === "AM") {
-                          newH = h24 >= 12 ? h24 - 12 : h24;
-                        } else {
-                          newH = h24 < 12 ? h24 + 12 : h24;
-                        }
-                        setReminderTime(String(newH).padStart(2, "0") + ":" + min);
-                      }}
-                      style={{
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        backgroundColor: isActive ? "#4078e0" : "transparent",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: isActive ? "#ffffff" : colors.textTertiary,
-                          fontSize: 13,
-                          fontWeight: "700",
-                        }}
-                      >
-                        {period}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Save Button */}
-              <TouchableOpacity
-                onPress={() => {
-                  const match = reminderTime.match(/^(\d{2}):(\d{2})$/);
-                  if (match) {
-                    updateNotificationSettings(user.id, true, reminderTime);
-                    const h = parseInt(match[1]);
-                    const m = match[2];
-                    const period = h >= 12 ? "PM" : "AM";
-                    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                    showToast(`Reminder set for ${h12}:${m} ${period}`, "success");
-                  }
-                }}
-                style={{
-                  backgroundColor: "#4078e0",
-                  borderRadius: 12,
-                  padding: 12,
-                }}
-              >
-                <Ionicons name="checkmark" size={20} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Appearance */}
-      <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: "700", marginBottom: 14, letterSpacing: 0.3 }}>
-        {isDark ? "\u{1F319}" : "\u2600\uFE0F"} Appearance
-      </Text>
-      <View
-        style={{
-          backgroundColor: colors.glassCardAlt,
-          borderRadius: 18,
-          padding: 20,
-          marginBottom: 24,
-          borderWidth: 1,
-          borderColor: colors.glassBorderLight,
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: "#4078e012", justifyContent: "center", alignItems: "center" }}>
-              <Ionicons name={isDark ? "moon" : "sunny"} size={18} color="#4078e0" />
-            </View>
-            <View>
-              <Text style={{ color: colors.textSubtitle, fontSize: 15, fontWeight: "600" }}>Dark Mode</Text>
-              <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 2 }}>
-                {isDark ? "Dark" : "Light"} theme active
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={isDark}
-            onValueChange={toggleTheme}
-            trackColor={{ false: colors.switchTrackOff, true: "#4078e050" }}
-            thumbColor={isDark ? "#4078e0" : "#6b7280"}
-          />
-        </View>
-      </View>
-
-      {/* Manage Tabs */}
-      <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: "700", marginBottom: 14, letterSpacing: 0.3 }}>
-        {"\u2699\uFE0F"} Manage Tabs
-      </Text>
-      <View
-        style={{
-          backgroundColor: colors.glassCardAlt,
-          borderRadius: 18,
-          padding: 20,
-          marginBottom: 24,
-          borderWidth: 1,
-          borderColor: colors.glassBorderLight,
-        }}
-      >
-        {[
-          { key: "finance", label: "Finance", icon: "cash", color: "#2bb883" },
-          { key: "goals", label: "Goals", icon: "trophy", color: "#e0a820" },
-          { key: "workout", label: "Workout", icon: "barbell", color: "#e06612" },
-          { key: "debts", label: "Debts", icon: "wallet", color: "#5494e0" },
-        ].map((tab, idx, arr) => (
-          <View
-            key={tab.key}
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingVertical: 12,
-              borderBottomWidth: idx < arr.length - 1 ? 1 : 0,
-              borderBottomColor: colors.glassBorder,
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: `${tab.color}12`, justifyContent: "center", alignItems: "center" }}>
-                <Ionicons name={tab.icon} size={18} color={tab.color} />
-              </View>
-              <Text style={{ color: colors.textSubtitle, fontSize: 15, fontWeight: "600" }}>{tab.label}</Text>
-            </View>
-            <Switch
-              value={tabVisibility[tab.key] !== false}
-              onValueChange={() => toggleTabVisibility(tab.key)}
-              trackColor={{ false: colors.switchTrackOff, true: `${tab.color}50` }}
-              thumbColor={tabVisibility[tab.key] !== false ? tab.color : "#6b7280"}
-            />
-          </View>
-        ))}
-      </View>
-
       {/* Achievement Badges */}
       <View style={{ marginBottom: 28 }}>
         <AchievementBadges habits={habits} debts={debts} />
       </View>
 
-      {/* Logout */}
-      <TouchableOpacity
-        onPress={() =>
-          Alert.alert("Logout", "Are you sure you want to logout?", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Logout", style: "destructive", onPress: onLogout },
-          ])
-        }
-        style={{
-          backgroundColor: "#e0555515",
-          borderRadius: 16,
-          padding: 18,
-          alignItems: "center",
-          marginBottom: 16,
-          borderWidth: 1,
-          borderColor: "#e0555525",
-        }}
-      >
-        <Text style={{ color: "#e05555", fontSize: 16, fontWeight: "700" }}>
-          {"\u{1F6AA}"} Logout
-        </Text>
-      </TouchableOpacity>
 
       {/* App info */}
       <View style={{ alignItems: "center", paddingVertical: 24 }}>
-        <Text style={{ color: colors.textTertiary, fontSize: 12 }}>HustleKit</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 12 }}>LifeStack</Text>
         <Text style={{ color: colors.textDim, fontSize: 11, marginTop: 4 }}>v1.0.0</Text>
       </View>
     </ScrollView>

@@ -5,15 +5,15 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
-  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobal } from "../context/GlobalContext";
+import { Image } from "expo-image";
+import { useProfile } from "../context/domains/ProfileContext";
 import { useTheme } from "../context/ThemeContext";
 import DailyTaskSheet from "../components/DailyTaskSheet";
 
 const DailyTaskSheetScreen = ({ navigation }) => {
-  const { profile } = useGlobal();
+  const { profile } = useProfile();
   const { colors, isDark, cardShadow } = useTheme();
 
   return (
@@ -42,7 +42,7 @@ const DailyTaskSheetScreen = ({ navigation }) => {
             </TouchableOpacity>
             {profile?.avatar_url ? (
               <Image
-                source={{ uri: profile.avatar_url }}
+                source={profile.avatar_url}
                 style={{
                   width: 38,
                   height: 38,
@@ -51,6 +51,8 @@ const DailyTaskSheetScreen = ({ navigation }) => {
                   borderWidth: 1,
                   borderColor: "#84643830",
                 }}
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <View
@@ -81,46 +83,6 @@ const DailyTaskSheetScreen = ({ navigation }) => {
         <DailyTaskSheet />
       </View>
 
-      {/* Floating Bottom Bar */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: Platform.OS === "ios" ? 28 : 14,
-          left: 0,
-          right: 0,
-          alignItems: "center",
-        }}
-        pointerEvents="box-none"
-      >
-        <View
-          style={{
-            backgroundColor: colors.floatingBarBg,
-            borderRadius: 24,
-            paddingVertical: 10,
-            paddingHorizontal: 40,
-            borderWidth: 1,
-            borderColor: colors.borderStrong,
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.navigate("HomeMain")}
-            activeOpacity={0.8}
-          >
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: colors.floatingButtonBg,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Ionicons name="home" size={22} color={colors.textPrimary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
     </View>
   );
 };

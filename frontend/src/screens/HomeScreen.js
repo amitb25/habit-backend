@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
-  Image,
   Modal,
   Animated,
   Share,
@@ -16,9 +15,12 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useProfile } from "../context/domains/ProfileContext";
+import { useTabVisibility } from "../context/domains/TabVisibilityContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import DashboardScreen from "./DashboardScreen";
@@ -51,7 +53,9 @@ const formatTime12 = (time) => {
 };
 
 const HomeScreen = ({ navigation }) => {
-  const { profile, user, tabVisibility, onLogout, updateNotificationSettings } = useGlobal();
+  const { user, onLogout } = useAuth();
+  const { profile, updateNotificationSettings } = useProfile();
+  const { tabVisibility } = useTabVisibility();
   const { colors, isDark, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -103,7 +107,7 @@ const HomeScreen = ({ navigation }) => {
     closeMenu(async () => {
       try {
         await Share.share({
-          message: "Check out HustleKit - the ultimate productivity app! 🚀",
+          message: "Check out LifeStack - Build Your Empire! 🚀",
         });
       } catch (_) {}
     });
@@ -194,8 +198,10 @@ const HomeScreen = ({ navigation }) => {
             >
               {profile?.avatar_url ? (
                 <Image
-                  source={{ uri: profile.avatar_url }}
+                  source={profile.avatar_url}
                   style={{ width: 38, height: 38 }}
+                  contentFit="cover"
+                  transition={200}
                 />
               ) : (
                 <Ionicons name="person" size={18} color="#c09460" />
@@ -302,54 +308,6 @@ const HomeScreen = ({ navigation }) => {
         {activeTab === "debts" && <DebtsScreen navigation={navigation} />}
       </View>
 
-      {/* Floating Bottom Bar */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: Platform.OS === "ios" ? 28 : 14,
-          left: 0,
-          right: 0,
-          alignItems: "center",
-        }}
-        pointerEvents="box-none"
-      >
-        <View
-          style={{
-            borderRadius: 24,
-            overflow: "hidden",
-            borderWidth: 1,
-            borderColor: colors.glassBorderStrong,
-          }}
-        >
-          <BlurView
-            intensity={colors.blurIntensity}
-            tint={colors.blurTint}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 40,
-            }}
-          >
-            <View style={{ backgroundColor: colors.glassFloatingBar, position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-            <TouchableOpacity
-              onPress={() => setActiveTab("dashboard")}
-              activeOpacity={0.8}
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  backgroundColor: colors.glassChip,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Ionicons name="home" size={22} color={colors.textPrimary} />
-              </View>
-            </TouchableOpacity>
-          </BlurView>
-        </View>
-      </View>
       {/* Hamburger Menu - Left Drawer */}
       <Modal
         visible={menuVisible}
@@ -393,7 +351,7 @@ const HomeScreen = ({ navigation }) => {
                   borderWidth: 1, borderColor: "#84643830", overflow: "hidden",
                 }}>
                   {profile?.avatar_url ? (
-                    <Image source={{ uri: profile.avatar_url }} style={{ width: 48, height: 48 }} />
+                    <Image source={profile.avatar_url} style={{ width: 48, height: 48 }} contentFit="cover" transition={200} />
                   ) : (
                     <Ionicons name="person" size={22} color="#c09460" />
                   )}

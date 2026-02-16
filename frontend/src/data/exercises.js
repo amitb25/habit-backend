@@ -1,5 +1,11 @@
 // Full Body Exercise Library — Beginner to Advanced
 
+// Exercise videos (hosted on Cloudinary)
+export const exerciseVideos = {
+  "Standard Push-ups": { uri: "https://res.cloudinary.com/dju2e6ctq/video/upload/v1771237419/exercises/chest-pushup.mp4" },
+  "Knee Push-ups": { uri: "https://res.cloudinary.com/dju2e6ctq/video/upload/v1771237433/exercises/knee-pushup.mp4" },
+};
+
 export const exerciseData = [
   // ─── CHEST ────────────────────────────────────
   {

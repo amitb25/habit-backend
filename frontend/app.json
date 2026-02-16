@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "HustleKit",
-    "slug": "hustlekit",
+    "name": "LifeStack",
+    "slug": "lifestack",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/logo.png",
       "backgroundColor": "#0a0a0f",
       "resizeMode": "contain"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0a0a0f"
       },
-      "package": "com.its.aim25.hustlekit"
+      "package": "com.its.aim25.lifestack"
     },
     "plugins": [
       "expo-asset",

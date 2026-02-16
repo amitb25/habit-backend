@@ -149,4 +149,4 @@ const HabitCard = ({ habit, onToggle, onPress, onDelete }) => {
   );
 };
 
-export default HabitCard;
+export default React.memo(HabitCard);

@@ -89,4 +89,4 @@ const CategoryPieChart = ({ data = [] }) => {
   );
 };
 
-export default CategoryPieChart;
+export default React.memo(CategoryPieChart);

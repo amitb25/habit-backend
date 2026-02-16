@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -12,7 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useGoals } from "../context/domains/GoalsContext";
 import { useTheme } from "../context/ThemeContext";
 import useShake from "../hooks/useShake";
 import { formatDate } from "../utils/helpers";
@@ -36,8 +38,8 @@ const priorityConfig = {
 };
 
 const GoalsScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const {
-    user,
     goals,
     goalSummary,
     loadGoals,
@@ -50,7 +52,7 @@ const GoalsScreen = ({ navigation }) => {
     addGoalMilestone,
     toggleGoalMilestone,
     removeGoalMilestone,
-  } = useGlobal();
+  } = useGoals();
   const { colors, isDark, glassShadow } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -78,11 +80,11 @@ const GoalsScreen = ({ navigation }) => {
     loadGoals(user.id);
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadGoals(user.id);
     setRefreshing(false);
-  };
+  }, [user.id, loadGoals]);
 
   const handleAdd = async () => {
     setTitleError("");
@@ -112,10 +114,10 @@ const GoalsScreen = ({ navigation }) => {
     loadGoals(user.id);
   };
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = useCallback(async (id, newStatus) => {
     await editGoal(id, { status: newStatus });
     loadGoals(user.id);
-  };
+  }, [editGoal, loadGoals, user.id]);
 
   const handleUpdateProgress = async () => {
     if (!progressModal) return;
@@ -132,7 +134,7 @@ const GoalsScreen = ({ navigation }) => {
     loadGoals(user.id);
   };
 
-  const handleDelete = (id, name) => {
+  const handleDelete = useCallback((id, name) => {
     Alert.alert("Delete Goal", `Remove "${name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -144,420 +146,322 @@ const GoalsScreen = ({ navigation }) => {
         },
       },
     ]);
-  };
+  }, [removeGoal, loadGoals, user.id]);
 
-  const handleAddMilestone = async (goalId) => {
+  const handleAddMilestone = useCallback(async (goalId) => {
     if (!milestoneText.trim()) return;
     await addGoalMilestone(goalId, user.id, milestoneText.trim());
     setMilestoneText("");
     loadMilestones(goalId);
-  };
+  }, [milestoneText, addGoalMilestone, user.id, loadMilestones]);
 
-  const handleToggleExpand = (goalId) => {
+  const handleToggleExpand = useCallback((goalId) => {
     if (expandedGoal === goalId) {
       setExpandedGoal(null);
     } else {
       setExpandedGoal(goalId);
       loadMilestones(goalId);
     }
-  };
+  }, [expandedGoal, loadMilestones]);
 
-  const filteredGoals =
+  const filteredGoals = useMemo(() =>
     filter === "all"
       ? goals
-      : goals.filter((g) => g.status === filter);
+      : goals.filter((g) => g.status === filter),
+    [filter, goals]
+  );
+
+  const renderGoalCard = useCallback(({ item: goal }) => {
+    const catInfo = getCategoryInfo(goal.category);
+    const prio = priorityConfig[goal.priority] || priorityConfig.medium;
+    const isExpanded = expandedGoal === goal.id;
+    const progress = goal.target_value
+      ? Math.min(100, Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100))
+      : null;
+    const milestones = goalMilestones[goal.id] || [];
+    const completedMilestones = milestones.filter((m) => m.is_completed).length;
+
+    return (
+      <View
+        style={{
+          backgroundColor: colors.glassCard,
+          borderRadius: 16,
+          padding: 18,
+          marginBottom: 12,
+          borderLeftWidth: 3,
+          borderLeftColor: catInfo.color,
+          borderWidth: 1,
+          borderColor: colors.glassBorder,
+          borderTopWidth: 1,
+          borderTopColor: colors.glassHighlight,
+          opacity: goal.status === "abandoned" ? 0.5 : 1,
+          ...glassShadow,
+        }}
+      >
+        {/* Header */}
+        <TouchableOpacity
+          onPress={() => handleToggleExpand(goal.id)}
+          activeOpacity={0.7}
+        >
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <Text style={{ fontSize: 18 }}>{catInfo.icon}</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: "700", flex: 1 }}>
+                  {goal.title}
+                </Text>
+              </View>
+              {goal.description && (
+                <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2, marginLeft: 26 }}>
+                  {goal.description}
+                </Text>
+              )}
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{ backgroundColor: prio.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                <Text style={{ color: prio.color, fontSize: 10, fontWeight: "600" }}>{prio.label}</Text>
+              </View>
+              {goal.status === "completed" && (
+                <View style={{ backgroundColor: "#2bb88315", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: colors.accentGreen, fontSize: 10, fontWeight: "600" }}>DONE</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {progress !== null && (
+            <View style={{ marginTop: 14 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
+                  {goal.current_value} / {goal.target_value} {goal.unit || ""}
+                </Text>
+                <Text style={{ color: catInfo.color, fontSize: 11, fontWeight: "600" }}>{progress}%</Text>
+              </View>
+              <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.glassProgressTrack, overflow: "hidden" }}>
+                <View style={{ height: "100%", width: `${progress}%`, borderRadius: 4, backgroundColor: catInfo.color }} />
+              </View>
+            </View>
+          )}
+
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Text style={{ color: catInfo.color, fontSize: 11, fontWeight: "500" }}>{catInfo.label}</Text>
+              {goal.deadline && (
+                <>
+                  <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
+                  <Text style={{ color: colors.textTertiary, fontSize: 11 }}>Due: {formatDate(goal.deadline)}</Text>
+                </>
+              )}
+              {milestones.length > 0 && (
+                <>
+                  <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
+                  <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
+                    {completedMilestones}/{milestones.length} milestones
+                  </Text>
+                </>
+              )}
+            </View>
+            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.textTertiary} />
+          </View>
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.glassBorder }}>
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
+              {goal.status === "active" && goal.target_value && (
+                <TouchableOpacity
+                  onPress={() => { setProgressValue(String(goal.current_value)); setProgressModal(goal); }}
+                  style={{
+                    flex: 1, padding: 10, borderRadius: 12,
+                    backgroundColor: isDark ? `${catInfo.color}15` : `${catInfo.color}35`,
+                    alignItems: "center", borderWidth: 1,
+                    borderColor: isDark ? `${catInfo.color}25` : `${catInfo.color}45`,
+                  }}
+                >
+                  <Text style={{ color: catInfo.color, fontSize: 12, fontWeight: "600" }}>Update Progress</Text>
+                </TouchableOpacity>
+              )}
+              {goal.status === "active" && (
+                <TouchableOpacity
+                  onPress={() => handleStatusChange(goal.id, "completed")}
+                  style={{
+                    flex: 1, padding: 10, borderRadius: 12,
+                    backgroundColor: isDark ? "#2bb88315" : "#2bb88335",
+                    alignItems: "center", borderWidth: 1,
+                    borderColor: isDark ? "#2bb88325" : "#2bb88345",
+                  }}
+                >
+                  <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: "600" }}>Mark Complete</Text>
+                </TouchableOpacity>
+              )}
+              {goal.status === "active" && (
+                <TouchableOpacity
+                  onPress={() => handleStatusChange(goal.id, "abandoned")}
+                  style={{
+                    padding: 10, borderRadius: 12,
+                    backgroundColor: isDark ? "#e0555512" : "#e0555532",
+                    alignItems: "center", borderWidth: 1,
+                    borderColor: isDark ? "#e0555520" : "#e0555540",
+                  }}
+                >
+                  <Ionicons name="close" size={16} color="#e05555" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: "600", marginBottom: 10 }}>Milestones</Text>
+            {milestones.map((m) => (
+              <TouchableOpacity
+                key={m.id}
+                onPress={() => toggleGoalMilestone(m.id, goal.id)}
+                style={{
+                  flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 12,
+                  marginBottom: 6, backgroundColor: m.is_completed ? "#2bb88308" : colors.glassInput, borderRadius: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+                    borderColor: m.is_completed ? "#2bb883" : colors.textTertiary,
+                    backgroundColor: m.is_completed ? "#2bb883" : "transparent",
+                    justifyContent: "center", alignItems: "center", marginRight: 12,
+                  }}
+                >
+                  {m.is_completed && <Ionicons name="checkmark" size={14} color="#ffffff" />}
+                </View>
+                <Text
+                  style={{
+                    color: m.is_completed ? colors.textTertiary : colors.textPrimary,
+                    fontSize: 13, flex: 1, textDecorationLine: m.is_completed ? "line-through" : "none",
+                  }}
+                >
+                  {m.title}
+                </Text>
+                <TouchableOpacity onPress={() => removeGoalMilestone(m.id, goal.id)} style={{ padding: 4 }}>
+                  <Ionicons name="trash-outline" size={14} color="#e0555550" />
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+
+            {goal.status === "active" && (
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
+                <TextInput
+                  value={milestoneText}
+                  onChangeText={setMilestoneText}
+                  placeholder="Add milestone..."
+                  placeholderTextColor={colors.textTertiary}
+                  style={{
+                    flex: 1, backgroundColor: colors.glassInput, color: colors.textPrimary,
+                    borderRadius: 10, padding: 12, fontSize: 13, borderWidth: 1, borderColor: colors.glassBorder,
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => handleAddMilestone(goal.id)}
+                  style={{ width: 44, borderRadius: 10, backgroundColor: catInfo.color, justifyContent: "center", alignItems: "center" }}
+                >
+                  <Ionicons name="add" size={20} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              onPress={() => handleDelete(goal.id, goal.title)}
+              style={{ alignSelf: "flex-end", marginTop: 12, padding: 4 }}
+            >
+              <Text style={{ color: "#e0555550", fontSize: 12 }}>Delete Goal</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  }, [expandedGoal, goalMilestones, milestoneText, colors, isDark, glassShadow, handleDelete, handleToggleExpand, handleStatusChange, handleAddMilestone, toggleGoalMilestone, removeGoalMilestone]);
+
+  const goalsListHeader = useMemo(() => (
+    <>
+      {/* Summary Cards */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 22 }}>
+        {[
+          { label: "Total", value: goalSummary.total, color: "#4078e0", textColor: colors.accentBlue, icon: "\u{1F3AF}" },
+          { label: "Active", value: goalSummary.active, color: "#e0a820", textColor: colors.accentYellow, icon: "\u{1F525}" },
+          { label: "Completed", value: goalSummary.completed, color: "#2bb883", textColor: colors.accentGreen, icon: "\u{2705}" },
+          { label: "Abandoned", value: goalSummary.abandoned, color: "#6b7280", textColor: "#6b7280", icon: "\u{1F6AB}" },
+        ].map((s) => (
+          <View
+            key={s.label}
+            style={{
+              backgroundColor: colors.glassCard,
+              borderRadius: 14,
+              padding: 16,
+              width: "47%",
+              alignItems: "center",
+              borderWidth: 1,
+              borderColor: colors.glassBorder,
+              ...glassShadow,
+            }}
+          >
+            <View
+              style={{
+                width: 36, height: 36, borderRadius: 12, backgroundColor: `${s.color}12`,
+                justifyContent: "center", alignItems: "center", marginBottom: 8,
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>{s.icon}</Text>
+            </View>
+            <Text style={{ color: s.textColor, fontSize: 26, fontWeight: "800" }}>{s.value}</Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>{s.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
+        {[
+          { key: "all", label: "All" },
+          { key: "active", label: "Active" },
+          { key: "completed", label: "Completed" },
+          { key: "abandoned", label: "Abandoned" },
+        ].map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            onPress={() => setFilter(f.key)}
+            style={{
+              backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
+              paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22, marginRight: 8,
+              borderWidth: filter === f.key ? 0 : 1,
+              borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
+            }}
+          >
+            <Text style={{ color: filter === f.key ? "#ffffff" : colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </>
+  ), [goalSummary, filter, colors, glassShadow]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
-      >
-        {/* Summary Cards */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 22 }}>
-          {[
-            { label: "Total", value: goalSummary.total, color: "#4078e0", textColor: colors.accentBlue, icon: "\u{1F3AF}" },
-            { label: "Active", value: goalSummary.active, color: "#e0a820", textColor: colors.accentYellow, icon: "\u{1F525}" },
-            { label: "Completed", value: goalSummary.completed, color: "#2bb883", textColor: colors.accentGreen, icon: "\u{2705}" },
-            { label: "Abandoned", value: goalSummary.abandoned, color: "#6b7280", textColor: "#6b7280", icon: "\u{1F6AB}" },
-          ].map((s) => (
-            <View
-              key={s.label}
-              style={{
-                backgroundColor: colors.glassCard,
-                borderRadius: 14,
-                padding: 16,
-                width: "47%",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: colors.glassBorder,
-                ...glassShadow,
-              }}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 12,
-                  backgroundColor: `${s.color}12`,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginBottom: 8,
-                }}
-              >
-                <Text style={{ fontSize: 18 }}>{s.icon}</Text>
-              </View>
-              <Text style={{ color: s.textColor, fontSize: 26, fontWeight: "800" }}>{s.value}</Text>
-              <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 3 }}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Filters */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
-          {[
-            { key: "all", label: "All" },
-            { key: "active", label: "Active" },
-            { key: "completed", label: "Completed" },
-            { key: "abandoned", label: "Abandoned" },
-          ].map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => setFilter(f.key)}
-              style={{
-                backgroundColor: filter === f.key ? "#4078e0" : colors.glassChip,
-                paddingHorizontal: 16,
-                paddingVertical: 9,
-                borderRadius: 22,
-                marginRight: 8,
-                borderWidth: filter === f.key ? 0 : 1,
-                borderColor: filter === f.key ? "transparent" : colors.glassChipBorder,
-              }}
-            >
-              <Text
-                style={{
-                  color: filter === f.key ? "#ffffff" : colors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: "600",
-                }}
-              >
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Goal Cards */}
-        {filteredGoals.length === 0 ? (
+      <FlatList
+        data={filteredGoals}
+        keyExtractor={(item) => item.id}
+        renderItem={renderGoalCard}
+        ListHeaderComponent={goalsListHeader}
+        ListEmptyComponent={
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 44 }}>{"\u{1F3AF}"}</Text>
             <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>
               {filter === "all" ? "No goals set yet. Dream big!" : `No ${filter} goals`}
             </Text>
           </View>
-        ) : (
-          filteredGoals.map((goal) => {
-            const catInfo = getCategoryInfo(goal.category);
-            const prio = priorityConfig[goal.priority] || priorityConfig.medium;
-            const isExpanded = expandedGoal === goal.id;
-            const progress = goal.target_value
-              ? Math.min(100, Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100))
-              : null;
-            const milestones = goalMilestones[goal.id] || [];
-            const completedMilestones = milestones.filter((m) => m.is_completed).length;
-
-            return (
-              <View
-                key={goal.id}
-                style={{
-                  backgroundColor: colors.glassCard,
-                  borderRadius: 16,
-                  padding: 18,
-                  marginBottom: 12,
-                  borderLeftWidth: 3,
-                  borderLeftColor: catInfo.color,
-                  borderWidth: 1,
-                  borderColor: colors.glassBorder,
-                  borderTopWidth: 1,
-                  borderTopColor: colors.glassHighlight,
-                  opacity: goal.status === "abandoned" ? 0.5 : 1,
-                  ...glassShadow,
-                }}
-              >
-                {/* Header */}
-                <TouchableOpacity
-                  onPress={() => handleToggleExpand(goal.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <Text style={{ fontSize: 18 }}>{catInfo.icon}</Text>
-                        <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: "700", flex: 1 }}>
-                          {goal.title}
-                        </Text>
-                      </View>
-                      {goal.description && (
-                        <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2, marginLeft: 26 }}>
-                          {goal.description}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      {/* Priority badge */}
-                      <View
-                        style={{
-                          backgroundColor: prio.bg,
-                          borderRadius: 8,
-                          paddingHorizontal: 8,
-                          paddingVertical: 3,
-                        }}
-                      >
-                        <Text style={{ color: prio.color, fontSize: 10, fontWeight: "600" }}>
-                          {prio.label}
-                        </Text>
-                      </View>
-                      {/* Status badge */}
-                      {goal.status === "completed" && (
-                        <View
-                          style={{
-                            backgroundColor: "#2bb88315",
-                            borderRadius: 8,
-                            paddingHorizontal: 8,
-                            paddingVertical: 3,
-                          }}
-                        >
-                          <Text style={{ color: colors.accentGreen, fontSize: 10, fontWeight: "600" }}>DONE</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Progress bar (if has target) */}
-                  {progress !== null && (
-                    <View style={{ marginTop: 14 }}>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11 }}>
-                          {goal.current_value} / {goal.target_value} {goal.unit || ""}
-                        </Text>
-                        <Text style={{ color: catInfo.color, fontSize: 11, fontWeight: "600" }}>
-                          {progress}%
-                        </Text>
-                      </View>
-                      <View
-                        style={{
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: colors.glassProgressTrack,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <View
-                          style={{
-                            height: "100%",
-                            width: `${progress}%`,
-                            borderRadius: 4,
-                            backgroundColor: catInfo.color,
-                          }}
-                        />
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Meta row */}
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                      <Text style={{ color: catInfo.color, fontSize: 11, fontWeight: "500" }}>
-                        {catInfo.label}
-                      </Text>
-                      {goal.deadline && (
-                        <>
-                          <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
-                          <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                            Due: {formatDate(goal.deadline)}
-                          </Text>
-                        </>
-                      )}
-                      {milestones.length > 0 && (
-                        <>
-                          <Text style={{ color: colors.borderStrong }}>{"\u2022"}</Text>
-                          <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                            {completedMilestones}/{milestones.length} milestones
-                          </Text>
-                        </>
-                      )}
-                    </View>
-                    <Ionicons
-                      name={isExpanded ? "chevron-up" : "chevron-down"}
-                      size={16}
-                      color={colors.textTertiary}
-                    />
-                  </View>
-                </TouchableOpacity>
-
-                {/* Expanded section */}
-                {isExpanded && (
-                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.glassBorder }}>
-                    {/* Action buttons */}
-                    <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
-                      {goal.status === "active" && goal.target_value && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            setProgressValue(String(goal.current_value));
-                            setProgressModal(goal);
-                          }}
-                          style={{
-                            flex: 1,
-                            padding: 10,
-                            borderRadius: 12,
-                            backgroundColor: isDark ? `${catInfo.color}15` : `${catInfo.color}35`,
-                            alignItems: "center",
-                            borderWidth: 1,
-                            borderColor: isDark ? `${catInfo.color}25` : `${catInfo.color}45`,
-                          }}
-                        >
-                          <Text style={{ color: catInfo.color, fontSize: 12, fontWeight: "600" }}>
-                            Update Progress
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                      {goal.status === "active" && (
-                        <TouchableOpacity
-                          onPress={() => handleStatusChange(goal.id, "completed")}
-                          style={{
-                            flex: 1,
-                            padding: 10,
-                            borderRadius: 12,
-                            backgroundColor: isDark ? "#2bb88315" : "#2bb88335",
-                            alignItems: "center",
-                            borderWidth: 1,
-                            borderColor: isDark ? "#2bb88325" : "#2bb88345",
-                          }}
-                        >
-                          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: "600" }}>
-                            Mark Complete
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                      {goal.status === "active" && (
-                        <TouchableOpacity
-                          onPress={() => handleStatusChange(goal.id, "abandoned")}
-                          style={{
-                            padding: 10,
-                            borderRadius: 12,
-                            backgroundColor: isDark ? "#e0555512" : "#e0555532",
-                            alignItems: "center",
-                            borderWidth: 1,
-                            borderColor: isDark ? "#e0555520" : "#e0555540",
-                          }}
-                        >
-                          <Ionicons name="close" size={16} color="#e05555" />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-
-                    {/* Milestones */}
-                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: "600", marginBottom: 10 }}>
-                      Milestones
-                    </Text>
-                    {milestones.map((m) => (
-                      <TouchableOpacity
-                        key={m.id}
-                        onPress={() => toggleGoalMilestone(m.id, goal.id)}
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          paddingVertical: 10,
-                          paddingHorizontal: 12,
-                          marginBottom: 6,
-                          backgroundColor: m.is_completed ? "#2bb88308" : colors.glassInput,
-                          borderRadius: 10,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: 6,
-                            borderWidth: 2,
-                            borderColor: m.is_completed ? "#2bb883" : colors.textTertiary,
-                            backgroundColor: m.is_completed ? "#2bb883" : "transparent",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            marginRight: 12,
-                          }}
-                        >
-                          {m.is_completed && (
-                            <Ionicons name="checkmark" size={14} color="#ffffff" />
-                          )}
-                        </View>
-                        <Text
-                          style={{
-                            color: m.is_completed ? colors.textTertiary : colors.textPrimary,
-                            fontSize: 13,
-                            flex: 1,
-                            textDecorationLine: m.is_completed ? "line-through" : "none",
-                          }}
-                        >
-                          {m.title}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => removeGoalMilestone(m.id, goal.id)}
-                          style={{ padding: 4 }}
-                        >
-                          <Ionicons name="trash-outline" size={14} color="#e0555550" />
-                        </TouchableOpacity>
-                      </TouchableOpacity>
-                    ))}
-
-                    {/* Add milestone */}
-                    {goal.status === "active" && (
-                      <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
-                        <TextInput
-                          value={milestoneText}
-                          onChangeText={setMilestoneText}
-                          placeholder="Add milestone..."
-                          placeholderTextColor={colors.textTertiary}
-                          style={{
-                            flex: 1,
-                            backgroundColor: colors.glassInput,
-                            color: colors.textPrimary,
-                            borderRadius: 10,
-                            padding: 12,
-                            fontSize: 13,
-                            borderWidth: 1,
-                            borderColor: colors.glassBorder,
-                          }}
-                        />
-                        <TouchableOpacity
-                          onPress={() => handleAddMilestone(goal.id)}
-                          style={{
-                            width: 44,
-                            borderRadius: 10,
-                            backgroundColor: catInfo.color,
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Ionicons name="add" size={20} color="#ffffff" />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                    {/* Delete */}
-                    <TouchableOpacity
-                      onPress={() => handleDelete(goal.id, goal.title)}
-                      style={{ alignSelf: "flex-end", marginTop: 12, padding: 4 }}
-                    >
-                      <Text style={{ color: "#e0555550", fontSize: 12 }}>Delete Goal</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+        }
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4078e0" />}
+        removeClippedSubviews={false}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={10}
+      />
 
       {/* Floating Add Button */}
       <TouchableOpacity

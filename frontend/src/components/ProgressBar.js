@@ -34,4 +34,4 @@ const ProgressBar = ({ percentage = 0, color = "#4078e0", height = 10, showLabel
   );
 };
 
-export default ProgressBar;
+export default React.memo(ProgressBar);

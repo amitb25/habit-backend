@@ -58,7 +58,7 @@ const DailyQuote = () => {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `"${quote.text}" — ${quote.author}\n\nvia HustleKit`,
+        message: `"${quote.text}" — ${quote.author}\n\nvia LifeStack`,
       });
     } catch (_) {}
   };
@@ -239,4 +239,4 @@ const DailyQuote = () => {
   );
 };
 
-export default DailyQuote;
+export default React.memo(DailyQuote);

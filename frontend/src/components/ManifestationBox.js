@@ -13,7 +13,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useTheme } from "../context/ThemeContext";
-import { useGlobal } from "../context/GlobalContext";
+import { useAuth } from "../context/domains/AuthContext";
+import { useAffirmations } from "../context/domains/AffirmationsContext";
 import useShake from "../hooks/useShake";
 import {
   affirmationCategories,
@@ -23,13 +24,8 @@ import {
 
 const ManifestationBox = ({ manifestation, onSave }) => {
   const { colors, isDark, glassShadow } = useTheme();
-  const {
-    user,
-    customAffirmations,
-    loadCustomAffirmations,
-    addCustomAffirmation,
-    removeCustomAffirmation,
-  } = useGlobal();
+  const { user } = useAuth();
+  const { customAffirmations, loadCustomAffirmations, addCustomAffirmation, removeCustomAffirmation } = useAffirmations();
 
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(manifestation || "");
