@@ -1,0 +1,12 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS app_streak INT DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS longest_app_streak INT DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_active_date DATE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS xp INT DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS level INT DEFAULT 1;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS streak_freezes_available INT DEFAULT 1;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_freeze_granted_week DATE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reminder_time VARCHAR(5) DEFAULT '08:00';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN DEFAULT true;
+CREATE TABLE IF NOT EXISTS daily_checkins (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, checkin_date DATE NOT NULL DEFAULT CURRENT_DATE, habits_completed INT DEFAULT 0, created_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(profile_id, checkin_date));
+CREATE TABLE IF NOT EXISTS xp_logs (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, amount INT NOT NULL, reason VARCHAR(100) NOT NULL, reference_date DATE DEFAULT CURRENT_DATE, created_at TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS streak_freezes (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, habit_id UUID REFERENCES habits(id) ON DELETE SET NULL, freeze_date DATE NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(profile_id, freeze_date));

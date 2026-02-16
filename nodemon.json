@@ -1,0 +1,5 @@
+{
+  "watch": ["server.js", "config/", "controllers/", "middleware/", "routes/"],
+  "ignore": ["*.sql", "migrations/", "node_modules/", ".env*"],
+  "ext": "js,json"
+}
