@@ -5,7 +5,10 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["admin-dashboard/dist/**"]
+      }
     }
   ],
   "routes": [
@@ -14,7 +17,11 @@
       "dest": "server.js"
     },
     {
-      "src": "/admin(.*)",
+      "src": "/admin/assets/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/admin(/.*)?$",
       "dest": "server.js"
     }
   ]
