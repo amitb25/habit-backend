@@ -33,6 +33,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Vercel
+.vercel/
+
 # Logs
 *.log
 npm-debug.log*

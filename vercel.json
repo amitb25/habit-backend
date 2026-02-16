@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "installCommand": "npm install && cd admin-dashboard && npm install",
+  "buildCommand": "cd admin-dashboard && npm run build && mkdir -p ../public/admin && cp -r dist/* ../public/admin/",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/admin/:path*", "destination": "/admin/index.html" }
+  ]
+}
