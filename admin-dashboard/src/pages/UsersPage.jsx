@@ -41,7 +41,7 @@ const UsersPage = () => {
     try {
       const res = await api.put(`/users/${user.id}/block`);
       toast.success(res.data.message);
-      fetchUsers();
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_blocked: !u.is_blocked } : u));
     } catch (err) {
       toast.error("Failed to update user");
     }
@@ -53,7 +53,7 @@ const UsersPage = () => {
     try {
       await api.delete(`/users/${user.id}`);
       toast.success("User deleted");
-      fetchUsers();
+      setUsers(prev => prev.filter(u => u.id !== user.id));
     } catch (err) {
       toast.error("Failed to delete user");
     }
