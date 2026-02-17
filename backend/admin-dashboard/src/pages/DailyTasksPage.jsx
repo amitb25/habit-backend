@@ -34,7 +34,7 @@ const DailyTasksPage = () => {
   useEffect(() => { fetchTasks(); }, [page, date, search]);
 
   const columns = [
-    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
     { key: "user", label: "User", render: (r) => r.profiles?.name || "-" },
     { key: "task_date", label: "Date" },
     { key: "priority", label: "Priority", render: (r) => (
@@ -55,7 +55,7 @@ const DailyTasksPage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div
             className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
-            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
           >
             <Search size={16} className="text-slate-600 shrink-0" />
             <input
@@ -63,14 +63,14 @@ const DailyTasksPage = () => {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search tasks..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
             />
           </div>
           <input
             type="date"
             value={date}
             onChange={(e) => { setDate(e.target.value); setPage(1); }}
-            className="input-dark rounded-xl px-4 py-2.5 text-sm"
+            className="input-dark rounded-xl px-4 py-2.5 text-sm cursor-pointer"
           />
         </div>
 

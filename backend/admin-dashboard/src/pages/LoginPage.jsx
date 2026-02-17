@@ -44,9 +44,9 @@ const LoginPage = () => {
           onSubmit={handleSubmit}
           className="rounded-2xl p-7 space-y-6"
           style={{
-            background: "#111128",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.4), 0 0 60px rgba(99,102,241,0.05)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-medium)",
+            boxShadow: "var(--shadow-xl)",
           }}
         >
           {/* Top accent */}
@@ -88,7 +88,7 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+            className="w-full btn-primary py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? (
               <>

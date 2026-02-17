@@ -34,13 +34,13 @@ const ExercisesPage = () => {
   const [editingCat, setEditingCat] = useState(null);
   const [editingEx, setEditingEx] = useState(null);
 
-  const [videoPreview, setVideoPreview] = useState(null); // { url, name }
+  const [videoPreview, setVideoPreview] = useState(null);
   const [catForm, setCatForm] = useState({ name: "", icon: "", color: "#3b82f6", sort_order: 0 });
   const [exForm, setExForm] = useState({ category_id: "", name: "", level: "beginner", sets: 3, reps: "", rest: "30s", tip: "", video_url: "", sort_order: 0 });
 
   // Confirm dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'cat'|'ex', id, name }
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchCategories = async () => {
     try {
@@ -143,9 +143,9 @@ const ExercisesPage = () => {
   };
 
   const exColumns = [
-    { key: "name", label: "Name", render: (r) => <span className="font-semibold text-white">{r.name}</span> },
+    { key: "name", label: "Name", render: (r) => <span className="font-semibold text-heading">{r.name}</span> },
     { key: "category", label: "Category", render: (r) => (
-      <span className="text-sm text-slate-300">{r.exercise_categories?.icon} {r.exercise_categories?.name}</span>
+      <span className="text-sm text-body">{r.exercise_categories?.icon} {r.exercise_categories?.name}</span>
     )},
     { key: "level", label: "Level", render: (r) => {
       const lc = levelColors[r.level] || {};
@@ -159,14 +159,14 @@ const ExercisesPage = () => {
     { key: "reps", label: "Reps" },
     { key: "rest", label: "Rest" },
     { key: "video", label: "Video", render: (r) => r.video_url ? (
-      <button onClick={(e) => { e.stopPropagation(); setVideoPreview({ url: r.video_url, name: r.name }); }} className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-xl transition-all duration-200" title="Play video">
+      <button onClick={(e) => { e.stopPropagation(); setVideoPreview({ url: r.video_url, name: r.name }); }} className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-xl transition-all duration-200 cursor-pointer" title="Play video">
         <Play size={16} />
       </button>
     ) : <span className="text-slate-600">-</span> },
     { key: "actions", label: "Actions", render: (r) => (
       <div className="flex gap-1">
-        <button onClick={(e) => { e.stopPropagation(); openExModal(r); }} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-        <button onClick={(e) => askDeleteEx(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+        <button onClick={(e) => { e.stopPropagation(); openExModal(r); }} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Pencil size={14} /></button>
+        <button onClick={(e) => askDeleteEx(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Trash2 size={14} /></button>
       </div>
     )},
   ];
@@ -176,13 +176,13 @@ const ExercisesPage = () => {
       <Header title="Exercises" subtitle="Manage exercises & categories" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-5 animate-slideUp">
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "#0d0d22", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
           {["categories", "exercises"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 py-2 text-sm font-medium capitalize transition-all duration-200 rounded-lg ${
-                tab === t ? "text-white" : "text-slate-500 hover:text-slate-300"
+              className={`px-5 py-2 text-sm font-medium capitalize transition-all duration-200 rounded-lg cursor-pointer ${
+                tab === t ? "text-white" : "text-slate-500 hover-text-body"
               }`}
               style={tab === t ? { background: "linear-gradient(135deg, #6366f1, #7c3aed)", boxShadow: "0 2px 10px rgba(99,102,241,0.25)" } : {}}
             >
@@ -204,22 +204,22 @@ const ExercisesPage = () => {
                   key={cat.id}
                   className="rounded-2xl p-5 flex items-center justify-between transition-all duration-200 hover:-translate-y-0.5"
                   style={{
-                    background: "#111128",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
                     borderLeft: `3px solid ${cat.color}`,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{cat.icon}</span>
                     <div>
-                      <p className="text-white font-semibold">{cat.name}</p>
+                      <p className="text-heading font-semibold">{cat.name}</p>
                       <p className="text-[10px] uppercase tracking-[0.15em] text-slate-600">Order: {cat.sort_order}</p>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => openCatModal(cat)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-                    <button onClick={() => askDeleteCat(cat)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+                    <button onClick={() => openCatModal(cat)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Pencil size={14} /></button>
+                    <button onClick={() => askDeleteCat(cat)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Trash2 size={14} /></button>
                   </div>
                 </div>
               ))}
@@ -232,16 +232,16 @@ const ExercisesPage = () => {
             <div className="flex flex-wrap items-center gap-3">
               <div
                 className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
-                style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
               >
                 <Search size={16} className="text-slate-600 shrink-0" />
-                <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search exercises..." className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3" />
+                <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search exercises..." className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3" />
               </div>
-              <select value={filterCat} onChange={(e) => { setFilterCat(e.target.value); setPage(1); }} className="input-dark rounded-xl px-3 py-2.5 text-sm">
+              <select value={filterCat} onChange={(e) => { setFilterCat(e.target.value); setPage(1); }} className="input-dark rounded-xl px-3 py-2.5 text-sm cursor-pointer">
                 <option value="">All Categories</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <select value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }} className="input-dark rounded-xl px-3 py-2.5 text-sm">
+              <select value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }} className="input-dark rounded-xl px-3 py-2.5 text-sm cursor-pointer">
                 <option value="">All Levels</option>
                 {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
@@ -279,8 +279,8 @@ const ExercisesPage = () => {
       <Modal isOpen={exModal} onClose={() => setExModal(false)} title={editingEx ? "Edit Exercise" : "Add Exercise"} maxWidth="max-w-xl">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Category</label><select value={exForm.category_id} onChange={(e) => setExForm({ ...exForm, category_id: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm">{categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}</select></div>
-            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Level</label><select value={exForm.level} onChange={(e) => setExForm({ ...exForm, level: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm">{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select></div>
+            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Category</label><select value={exForm.category_id} onChange={(e) => setExForm({ ...exForm, category_id: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm cursor-pointer">{categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}</select></div>
+            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Level</label><select value={exForm.level} onChange={(e) => setExForm({ ...exForm, level: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm cursor-pointer">{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select></div>
           </div>
           <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Name</label><input value={exForm.name} onChange={(e) => setExForm({ ...exForm, name: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm" /></div>
           <div className="grid grid-cols-3 gap-3">
@@ -321,20 +321,18 @@ const ExercisesPage = () => {
 
       {/* Video Preview Modal */}
       {videoPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "var(--bg-overlay)" }}>
           <div className="relative w-full max-w-3xl mx-4">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold text-lg">{videoPreview.name}</h3>
+              <h3 className="text-heading font-bold text-lg">{videoPreview.name}</h3>
               <button
                 onClick={() => setVideoPreview(null)}
-                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                className="p-2 text-slate-400 hover-text-heading hover-bg-subtle rounded-xl transition-all duration-200 cursor-pointer"
               >
                 <X size={20} />
               </button>
             </div>
-            {/* Video Player */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#000", border: "1px solid var(--border-medium)" }}>
               <video
                 src={videoPreview.url}
                 controls

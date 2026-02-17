@@ -9,18 +9,7 @@ import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
-
-const tooltipStyle = {
-  backgroundColor: "#141432",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "12px",
-  color: "#fff",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-  fontSize: "12px",
-  padding: "10px 14px",
-};
-
-const axisTickStyle = { fill: "#475569", fontSize: 11 };
+import { tooltipStyle, axisTickStyle } from "../utils/chartStyles";
 
 const FinancePage = () => {
   const { onMenuClick } = useOutletContext();
@@ -52,7 +41,7 @@ const FinancePage = () => {
   }, [page, search, typeFilter]);
 
   const columns = [
-    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
     { key: "user", label: "User", render: (r) => r.profiles?.name || "-" },
     { key: "type", label: "Type", render: (r) => (
       <span className={r.type === "income" ? "badge badge-success" : "badge badge-danger"}>
@@ -84,13 +73,13 @@ const FinancePage = () => {
               <div
                 className="rounded-2xl p-6"
                 style={{
-                  background: "#111128",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
+                  boxShadow: "var(--shadow-md)",
                 }}
               >
                 <div className="mb-5">
-                  <h3 className="text-base font-bold text-white">Top Categories</h3>
+                  <h3 className="text-base font-bold text-heading">Top Categories</h3>
                   <p className="text-xs text-slate-500 mt-1">Spending breakdown by category</p>
                 </div>
                 <ResponsiveContainer width="100%" height={260}>
@@ -101,7 +90,7 @@ const FinancePage = () => {
                         <stop offset="100%" stopColor="#fbbf24" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                     <XAxis dataKey="category" tick={{ ...axisTickStyle, fontSize: 10 }} angle={-20} textAnchor="end" height={50} axisLine={false} tickLine={false} />
                     <YAxis tick={axisTickStyle} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "rgba(245,158,11,0.2)", strokeWidth: 1 }} />
@@ -111,8 +100,8 @@ const FinancePage = () => {
                       stroke="#fbbf24"
                       strokeWidth={2}
                       fill="url(#areaGradFinance)"
-                      dot={{ r: 4, fill: "#111128", stroke: "#fbbf24", strokeWidth: 2 }}
-                      activeDot={{ r: 6, fill: "#fbbf24", stroke: "#111128", strokeWidth: 2 }}
+                      dot={{ r: 4, fill: "var(--chart-dot-fill)", stroke: "#fbbf24", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "#fbbf24", stroke: "var(--chart-dot-fill)", strokeWidth: 2 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -124,7 +113,7 @@ const FinancePage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div
             className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
-            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
           >
             <Search size={16} className="text-slate-600 shrink-0" />
             <input
@@ -132,10 +121,10 @@ const FinancePage = () => {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search by title or category..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
             />
           </div>
-          <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }} className="input-dark rounded-xl px-4 py-2.5 text-sm">
+          <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }} className="input-dark rounded-xl px-4 py-2.5 text-sm cursor-pointer">
             <option value="">All Types</option>
             <option value="income">Income</option>
             <option value="expense">Expense</option>

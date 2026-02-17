@@ -40,9 +40,9 @@ const StatsCard = ({ title, value, icon: Icon, color = "blue", subtitle, trend }
     <div
       className="relative overflow-hidden rounded-2xl p-5 group transition-all duration-300 hover:-translate-y-0.5"
       style={{
-        background: "#111128",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-md)",
       }}
     >
       <div className="flex items-center justify-between mb-4">
@@ -69,7 +69,7 @@ const StatsCard = ({ title, value, icon: Icon, color = "blue", subtitle, trend }
         )}
       </div>
       <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold mb-1.5">{title}</p>
-      <p className="text-3xl font-extrabold text-white tracking-tight">{value}</p>
+      <p className="text-3xl font-extrabold text-heading tracking-tight">{value}</p>
       {subtitle && <p className="text-[11px] text-slate-500 mt-1.5">{subtitle}</p>}
     </div>
   );

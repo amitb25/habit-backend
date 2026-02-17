@@ -14,7 +14,7 @@ const ConfirmDialog = ({
   message = "This action cannot be undone.",
   confirmText = "Confirm",
   cancelText = "Cancel",
-  variant = "delete", // delete | block | warning
+  variant = "delete",
   loading = false,
 }) => {
   if (!isOpen) return null;
@@ -26,7 +26,7 @@ const ConfirmDialog = ({
       {/* Overlay */}
       <div
         className="absolute inset-0"
-        style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
+        style={{ background: "var(--bg-overlay)", backdropFilter: "blur(8px)" }}
         onClick={onClose}
       />
 
@@ -34,9 +34,9 @@ const ConfirmDialog = ({
       <div
         className="relative w-full max-w-sm mx-4 rounded-2xl animate-scaleIn"
         style={{
-          background: "#111128",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.05)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-medium)",
+          boxShadow: "var(--shadow-xl)",
         }}
       >
         {/* Top accent */}
@@ -48,7 +48,7 @@ const ConfirmDialog = ({
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-slate-600 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          className="absolute top-4 right-4 p-1.5 text-slate-600 hover-text-heading transition-colors rounded-lg hover-bg-subtle cursor-pointer"
         >
           <X size={16} />
         </button>
@@ -63,7 +63,7 @@ const ConfirmDialog = ({
           </div>
 
           {/* Title */}
-          <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+          <h3 className="text-lg font-bold text-heading mb-2">{title}</h3>
 
           {/* Message */}
           <p className="text-sm text-slate-400 mb-6 leading-relaxed">{message}</p>
@@ -73,10 +73,10 @@ const ConfirmDialog = ({
             <button
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-all duration-200"
+              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover-text-heading transition-all duration-200 cursor-pointer"
               style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--cancel-btn-bg)",
+                border: "1px solid var(--cancel-btn-border)",
               }}
             >
               {cancelText}
@@ -84,7 +84,7 @@ const ConfirmDialog = ({
             <button
               onClick={onConfirm}
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:brightness-110"
+              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:brightness-110 cursor-pointer"
               style={{
                 background: variant === "delete"
                   ? "linear-gradient(135deg, #ef4444, #dc2626)"

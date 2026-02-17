@@ -10,20 +10,9 @@ import StatsCard from "../components/common/StatsCard";
 import { useAuth } from "../context/AuthContext";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
+import { tooltipStyle, axisTickStyle } from "../utils/chartStyles";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#f43f5e", "#a855f7", "#06b6d4"];
-
-const tooltipStyle = {
-  backgroundColor: "#141432",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "12px",
-  color: "#fff",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-  fontSize: "12px",
-  padding: "10px 14px",
-};
-
-const axisTickStyle = { fill: "#475569", fontSize: 11 };
 
 const quickActions = [
   { icon: Users, label: "Users", to: "/admin/users", gradient: "linear-gradient(135deg, #6366f1, #818cf8)", shadow: "rgba(99,102,241,0.3)" },
@@ -100,7 +89,7 @@ const DashboardPage = () => {
             </p>
             <button
               onClick={() => navigate("/admin/users")}
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-indigo-700 bg-white hover:bg-white/90 transition-all duration-200"
+              className="px-6 py-2.5 rounded-xl text-sm font-bold text-indigo-700 bg-white hover:bg-white/90 transition-all duration-200 cursor-pointer"
               style={{ boxShadow: "0 4px 15px rgba(0,0,0,0.15)" }}
             >
               View All Users
@@ -130,13 +119,13 @@ const DashboardPage = () => {
           <div
             className="lg:col-span-2 rounded-2xl p-6"
             style={{
-              background: "#111128",
-              border: "1px solid rgba(255,255,255,0.06)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
+              boxShadow: "var(--shadow-md)",
             }}
           >
             <div className="mb-5">
-              <h3 className="text-base font-bold text-white">User Growth</h3>
+              <h3 className="text-base font-bold text-heading">User Growth</h3>
               <p className="text-xs text-slate-500 mt-1">Last 30 days registration trend</p>
             </div>
             {userGrowth.length > 0 ? (
@@ -148,7 +137,7 @@ const DashboardPage = () => {
                       <stop offset="100%" stopColor="#818cf8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="date" tick={axisTickStyle} tickFormatter={(d) => d.slice(5)} axisLine={false} tickLine={false} />
                   <YAxis tick={axisTickStyle} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "rgba(99,102,241,0.2)", strokeWidth: 1 }} />
@@ -158,8 +147,8 @@ const DashboardPage = () => {
                     stroke="#818cf8"
                     strokeWidth={2}
                     fill="url(#areaGradGrowth)"
-                    dot={{ r: 4, fill: "#111128", stroke: "#818cf8", strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: "#818cf8", stroke: "#111128", strokeWidth: 2 }}
+                    dot={{ r: 4, fill: "var(--chart-dot-fill)", stroke: "#818cf8", strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: "#818cf8", stroke: "var(--chart-dot-fill)", strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -174,21 +163,21 @@ const DashboardPage = () => {
           <div
             className="rounded-2xl p-6"
             style={{
-              background: "#111128",
-              border: "1px solid rgba(255,255,255,0.06)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
+              boxShadow: "var(--shadow-md)",
             }}
           >
-            <h3 className="text-base font-bold text-white mb-5">Quick Actions</h3>
+            <h3 className="text-base font-bold text-heading mb-5">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               {quickActions.map(({ icon: Icon, label, to, gradient, shadow }) => (
                 <button
                   key={to}
                   onClick={() => navigate(to)}
-                  className="flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-1"
+                  className="flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                   style={{
-                    background: "#0d0d22",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "var(--bg-secondary)",
+                    border: "1px solid var(--border-subtle)",
                   }}
                 >
                   <div
@@ -208,13 +197,13 @@ const DashboardPage = () => {
         <div
           className="rounded-2xl p-6"
           style={{
-            background: "#111128",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-subtle)",
+            boxShadow: "var(--shadow-md)",
           }}
         >
           <div className="mb-5">
-            <h3 className="text-base font-bold text-white">User Level Distribution</h3>
+            <h3 className="text-base font-bold text-heading">User Level Distribution</h3>
             <p className="text-xs text-slate-500 mt-1">Breakdown of user levels across the platform</p>
           </div>
           {levelDist.length > 0 ? (

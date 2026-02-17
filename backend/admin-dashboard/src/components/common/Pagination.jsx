@@ -12,22 +12,22 @@ const Pagination = ({ page, pages, total, onPageChange }) => {
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="p-2 rounded-xl text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          className="p-2 rounded-xl text-slate-500 hover-text-heading disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-200"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <ChevronLeft size={16} />
         </button>
         <span
-          className="text-sm text-slate-300 font-medium px-4 py-2 rounded-xl"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          className="text-sm text-body font-medium px-4 py-2 rounded-xl"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           {page} <span className="text-slate-600 mx-1">/</span> {pages}
         </span>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= pages}
-          className="p-2 rounded-xl text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          className="p-2 rounded-xl text-slate-500 hover-text-heading disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-200"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <ChevronRight size={16} />
         </button>

@@ -9,18 +9,9 @@ import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
+import { tooltipStyle } from "../utils/chartStyles";
 
 const COLORS = ["#6366f1", "#10b981", "#f43f5e", "#f59e0b", "#a855f7", "#ec4899", "#06b6d4"];
-
-const tooltipStyle = {
-  backgroundColor: "#141432",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "12px",
-  color: "#fff",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-  fontSize: "12px",
-  padding: "10px 14px",
-};
 
 const GoalsPage = () => {
   const { onMenuClick } = useOutletContext();
@@ -47,7 +38,7 @@ const GoalsPage = () => {
   }, [page, search, statusFilter]);
 
   const columns = [
-    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
     { key: "user", label: "User", render: (r) => r.profiles?.name || "-" },
     { key: "category", label: "Category" },
     { key: "status", label: "Status", render: (r) => (
@@ -75,13 +66,13 @@ const GoalsPage = () => {
               <div
                 className="rounded-2xl p-6"
                 style={{
-                  background: "#111128",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
+                  boxShadow: "var(--shadow-md)",
                 }}
               >
                 <div className="mb-5">
-                  <h3 className="text-base font-bold text-white">Goals by Category</h3>
+                  <h3 className="text-base font-bold text-heading">Goals by Category</h3>
                   <p className="text-xs text-slate-500 mt-1">Distribution across categories</p>
                 </div>
                 <ResponsiveContainer width="100%" height={260}>
@@ -99,7 +90,7 @@ const GoalsPage = () => {
 
         <div
           className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <Search size={16} className="text-slate-600 shrink-0" />
           <input
@@ -107,7 +98,7 @@ const GoalsPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search goals by title..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
           />
         </div>
 
@@ -117,12 +108,12 @@ const GoalsPage = () => {
             <button
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1); }}
-              className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all duration-200 ${
-                statusFilter === s ? "text-white" : "text-slate-500 hover:text-slate-300"
+              className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all duration-200 cursor-pointer ${
+                statusFilter === s ? "text-white" : "text-slate-500 hover-text-body"
               }`}
               style={statusFilter === s
                 ? { background: "linear-gradient(135deg, #6366f1, #7c3aed)", boxShadow: "0 2px 10px rgba(99,102,241,0.25)" }
-                : { background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }
+                : { background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }
               }
             >
               {s || "All"}

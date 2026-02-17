@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import DashboardLayout from "./components/Layout/DashboardLayout";
 import Loader from "./components/common/Loader";
 import LoginPage from "./pages/LoginPage";
@@ -52,10 +53,12 @@ const AppRoutes = () => {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-        <Toaster position="top-right" toastOptions={{ style: { background: "#111128", color: "#fff", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" } }} />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+          <Toaster position="top-right" toastOptions={{ style: { background: "var(--bg-card)", color: "var(--text-heading)", border: "1px solid var(--border-subtle)", borderRadius: "12px", boxShadow: "var(--shadow-lg)" } }} />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -28,7 +28,6 @@ const WorkoutsPage = () => {
   const [exReps, setExReps] = useState("");
   const [exRest, setExRest] = useState("30s");
 
-  // Confirm dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -102,7 +101,7 @@ const WorkoutsPage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div
             className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
-            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
           >
             <Search size={16} className="text-slate-600 shrink-0" />
             <input
@@ -110,7 +109,7 @@ const WorkoutsPage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search workouts..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
             />
           </div>
           <button onClick={() => openModal()} className="flex items-center gap-2 btn-primary px-4 py-2.5 text-sm font-medium ml-auto">
@@ -129,16 +128,16 @@ const WorkoutsPage = () => {
                   key={w.id}
                   className="rounded-2xl p-5 accent-top transition-all duration-200 hover:-translate-y-0.5"
                   style={{
-                    background: "#111128",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{w.icon}</span>
                       <div>
-                        <h3 className="text-white font-bold">{w.name}</h3>
+                        <h3 className="text-heading font-bold">{w.name}</h3>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="badge" style={{ color: lc.color, background: lc.bg, border: `1px solid ${lc.border}` }}>{w.level}</span>
                           <span className="text-[10px] uppercase tracking-[0.15em] text-slate-600 font-medium">{w.duration}</span>
@@ -146,8 +145,8 @@ const WorkoutsPage = () => {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => openModal(w)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-                      <button onClick={() => askDelete(w)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+                      <button onClick={() => openModal(w)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Pencil size={14} /></button>
+                      <button onClick={() => askDelete(w)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Trash2 size={14} /></button>
                     </div>
                   </div>
                   <div className="space-y-0">
@@ -155,7 +154,7 @@ const WorkoutsPage = () => {
                       <div
                         key={idx}
                         className="flex justify-between text-sm text-slate-400 py-2"
-                        style={{ borderBottom: idx < w.exercises.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                        style={{ borderBottom: idx < w.exercises.length - 1 ? "1px solid var(--table-row-border)" : "none" }}
                       >
                         <span>{ex.exercise_name}</span>
                         <span className="text-xs text-slate-600 font-medium">{ex.sets}x{ex.reps}</span>
@@ -173,7 +172,7 @@ const WorkoutsPage = () => {
         <div className="space-y-4">
           <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm" /></div>
           <div className="grid grid-cols-3 gap-3">
-            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Level</label><select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm">{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select></div>
+            <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Level</label><select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm cursor-pointer">{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select></div>
             <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Duration</label><input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm" /></div>
             <div><label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Icon (emoji)</label><input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} className="w-full input-dark rounded-xl px-3 py-2.5 text-sm" /></div>
           </div>
@@ -182,9 +181,9 @@ const WorkoutsPage = () => {
             <label className="block text-[10px] uppercase tracking-[0.15em] text-slate-500 font-bold mb-2">Exercises</label>
             <div className="space-y-2 mb-3">
               {form.exercises.map((ex, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "#0d0d22", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span className="text-sm text-white">{ex.name} <span className="text-slate-600">({ex.sets}x{ex.reps}, rest {ex.rest})</span></span>
-                  <button onClick={() => removeExercise(idx)} className="text-rose-400 hover:text-rose-300 transition-colors"><Trash2 size={14} /></button>
+                <div key={idx} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+                  <span className="text-sm text-heading">{ex.name} <span className="text-slate-600">({ex.sets}x{ex.reps}, rest {ex.rest})</span></span>
+                  <button onClick={() => removeExercise(idx)} className="text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"><Trash2 size={14} /></button>
                 </div>
               ))}
             </div>

@@ -56,18 +56,18 @@ const SettingsPage = () => {
         <div
           className="rounded-2xl p-6 space-y-0"
           style={{
-            background: "#111128",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-subtle)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
           {defaultSettings.map((s, idx) => (
             <div
               key={s.key}
               className="flex items-center justify-between py-4"
-              style={{ borderBottom: idx < defaultSettings.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+              style={{ borderBottom: idx < defaultSettings.length - 1 ? "1px solid var(--table-row-border)" : "none" }}
             >
-              <label className="text-sm font-medium text-slate-300">{s.label}</label>
+              <label className="text-sm font-medium text-body">{s.label}</label>
               {s.type === "text" && (
                 <input
                   value={settings[s.key] ?? s.default}
@@ -86,11 +86,11 @@ const SettingsPage = () => {
               {s.type === "toggle" && (
                 <button
                   onClick={() => updateSetting(s.key, !(settings[s.key] ?? s.default))}
-                  className="w-12 h-6 rounded-full transition-all duration-300 relative"
+                  className="w-12 h-6 rounded-full transition-all duration-300 relative cursor-pointer"
                   style={{
                     background: (settings[s.key] ?? s.default)
                       ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                      : "rgba(255,255,255,0.08)",
+                      : "var(--toggle-off-bg)",
                     boxShadow: (settings[s.key] ?? s.default) ? "0 0 15px rgba(99,102,241,0.3)" : "none",
                   }}
                 >

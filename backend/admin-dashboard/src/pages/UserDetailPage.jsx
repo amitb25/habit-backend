@@ -43,13 +43,13 @@ const UserDetailPage = () => {
   const tabs = ["habits", "tasks", "finance", "goals"];
   const tabColumns = {
     habits: [
-      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
       { key: "category", label: "Category" },
       { key: "current_streak", label: "Streak", render: (r) => <span className="text-amber-400 font-semibold">{r.current_streak || 0}d</span> },
       { key: "total_completions", label: "Completions" },
     ],
     tasks: [
-      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
       { key: "task_date", label: "Date" },
       { key: "priority", label: "Priority", render: (r) => (
         <span className={`badge ${r.priority === "high" ? "badge-danger" : r.priority === "medium" ? "badge-warning" : "badge-info"}`}>
@@ -59,7 +59,7 @@ const UserDetailPage = () => {
       { key: "is_completed", label: "Done", render: (r) => r.is_completed ? <span className="text-emerald-400 font-semibold">Yes</span> : <span className="text-slate-600">No</span> },
     ],
     finance: [
-      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
       { key: "type", label: "Type", render: (r) => (
         <span className={r.type === "income" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>{r.type}</span>
       )},
@@ -68,7 +68,7 @@ const UserDetailPage = () => {
       { key: "transaction_date", label: "Date" },
     ],
     goals: [
-      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+      { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
       { key: "category", label: "Category" },
       { key: "status", label: "Status" },
       { key: "priority", label: "Priority" },
@@ -79,7 +79,7 @@ const UserDetailPage = () => {
     <>
       <Header title="User Detail" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-6 animate-slideUp">
-        <button onClick={() => navigate("/admin/users")} className="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors font-medium">
+        <button onClick={() => navigate("/admin/users")} className="flex items-center gap-2 text-sm text-slate-500 hover-text-heading transition-colors font-medium cursor-pointer">
           <ArrowLeft size={16} /> Back to Users
         </button>
 
@@ -87,9 +87,9 @@ const UserDetailPage = () => {
         <div
           className="rounded-2xl p-6 accent-top"
           style={{
-            background: "#111128",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-subtle)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
           <div className="flex items-center gap-5">
@@ -103,7 +103,7 @@ const UserDetailPage = () => {
               {user.name?.charAt(0)?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-white">{user.name}</h3>
+              <h3 className="text-xl font-bold text-heading">{user.name}</h3>
               <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1"><Mail size={14} /> {user.email}</p>
             </div>
             <span className={user.is_blocked ? "badge badge-danger" : "badge badge-success"}>
@@ -122,13 +122,13 @@ const UserDetailPage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#0d0d22", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
           {tabs.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 py-2.5 text-sm font-medium capitalize transition-all duration-200 rounded-lg flex-1 ${
-                tab === t ? "text-white" : "text-slate-500 hover:text-slate-300"
+              className={`px-5 py-2.5 text-sm font-medium capitalize transition-all duration-200 rounded-lg flex-1 cursor-pointer ${
+                tab === t ? "text-white" : "text-slate-500 hover-text-body"
               }`}
               style={tab === t ? {
                 background: "linear-gradient(135deg, #6366f1, #7c3aed)",

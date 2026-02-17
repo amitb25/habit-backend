@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, Search, Bell, Sun, MessageCircle, LayoutGrid, User, Settings, LogOut } from "lucide-react";
+import { Menu, Search, Bell, Sun, Moon, MessageCircle, LayoutGrid, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const searchOptions = [
   { label: "Dashboard", path: "/admin", keywords: ["dashboard", "home", "overview", "stats"] },
@@ -18,6 +19,7 @@ const searchOptions = [
 
 const Header = ({ title, subtitle, onMenuClick }) => {
   const { admin, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,10 +80,10 @@ const Header = ({ title, subtitle, onMenuClick }) => {
     <header
       className="sticky top-0 z-10"
       style={{
-        background: "rgba(10,10,26,0.9)",
+        background: "var(--bg-header)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        borderBottom: "1px solid var(--border-subtle)",
       }}
     >
       {/* Top bar with search + icons */}
@@ -90,8 +92,8 @@ const Header = ({ title, subtitle, onMenuClick }) => {
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-white transition-all duration-200 shrink-0"
-            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="lg:hidden p-2 rounded-xl text-slate-500 hover-text-heading transition-all duration-200 shrink-0 cursor-pointer"
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
           >
             <Menu size={18} />
           </button>
@@ -102,8 +104,8 @@ const Header = ({ title, subtitle, onMenuClick }) => {
           <div
             className="relative flex items-center w-full rounded-full px-5 py-3"
             style={{
-              background: "#111128",
-              border: `1px solid ${showResults && filteredResults.length > 0 ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}`,
+              background: "var(--bg-card)",
+              border: `1px solid ${showResults && filteredResults.length > 0 ? "rgba(99,102,241,0.3)" : "var(--border-subtle)"}`,
               transition: "border-color 0.2s ease",
             }}
           >
@@ -115,13 +117,13 @@ const Header = ({ title, subtitle, onMenuClick }) => {
               onFocus={() => setShowResults(true)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Type to search..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
             />
             <span
               className="shrink-0 text-[11px] font-medium text-slate-500 px-2 py-1 rounded-lg"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--border-subtle)",
+                border: "1px solid var(--border-medium)",
               }}
             >
               ⌘K
@@ -133,9 +135,9 @@ const Header = ({ title, subtitle, onMenuClick }) => {
             <div
               className="absolute top-full left-0 right-0 mt-2 rounded-2xl py-2 animate-slideUp overflow-hidden"
               style={{
-                background: "#141432",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+                background: "var(--bg-card-elevated)",
+                border: "1px solid var(--border-medium)",
+                boxShadow: "var(--shadow-lg)",
               }}
             >
               {filteredResults.length > 0 ? (
@@ -143,7 +145,7 @@ const Header = ({ title, subtitle, onMenuClick }) => {
                   <button
                     key={opt.path}
                     onClick={() => handleSearchSelect(opt.path)}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-slate-400 hover-text-heading hover-bg-subtle transition-all duration-200 cursor-pointer"
                   >
                     <Search size={14} className="text-slate-600" />
                     <span className="font-medium">{opt.label}</span>
@@ -161,16 +163,20 @@ const Header = ({ title, subtitle, onMenuClick }) => {
 
         {/* Right side icons */}
         <div className="flex items-center gap-3 shrink-0 ml-auto">
-          <button className="p-2 text-amber-400 hover:text-amber-300 transition-colors" title="Theme">
-            <Sun size={18} />
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button className="p-2 text-slate-500 hover:text-white transition-colors" title="Messages">
+          <button className="p-2 text-slate-500 hover-text-heading transition-colors cursor-pointer" title="Messages">
             <MessageCircle size={18} />
           </button>
-          <button className="p-2 text-slate-500 hover:text-white transition-colors" title="Apps">
+          <button className="p-2 text-slate-500 hover-text-heading transition-colors cursor-pointer" title="Apps">
             <LayoutGrid size={18} />
           </button>
-          <button className="relative p-2 text-slate-500 hover:text-white transition-colors" title="Notifications">
+          <button className="relative p-2 text-slate-500 hover-text-heading transition-colors cursor-pointer" title="Notifications">
             <Bell size={18} />
             <span
               className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500"
@@ -196,14 +202,14 @@ const Header = ({ title, subtitle, onMenuClick }) => {
               <div
                 className="absolute right-0 top-12 w-56 rounded-2xl py-2 animate-slideUp"
                 style={{
-                  background: "#141432",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+                  background: "var(--bg-card-elevated)",
+                  border: "1px solid var(--border-medium)",
+                  boxShadow: "var(--shadow-lg)",
                 }}
               >
                 {/* User info */}
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-sm font-semibold text-white truncate">{admin?.name || "Admin"}</p>
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                  <p className="text-sm font-semibold text-heading truncate">{admin?.name || "Admin"}</p>
                   <p className="text-xs text-slate-500 truncate mt-0.5">{admin?.email || "admin@lifestack.com"}</p>
                 </div>
 
@@ -211,24 +217,24 @@ const Header = ({ title, subtitle, onMenuClick }) => {
                 <div className="py-1">
                   <button
                     onClick={() => { setShowDropdown(false); navigate("/admin/settings"); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover-text-heading hover-bg-subtle transition-all duration-200 cursor-pointer"
                   >
                     <User size={15} />
                     Profile
                   </button>
                   <button
                     onClick={() => { setShowDropdown(false); navigate("/admin/settings"); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover-text-heading hover-bg-subtle transition-all duration-200 cursor-pointer"
                   >
                     <Settings size={15} />
                     Settings
                   </button>
                 </div>
 
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ borderTop: "1px solid var(--border-subtle)" }}>
                   <button
                     onClick={() => { setShowDropdown(false); logout(); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/[0.06] transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/[0.06] transition-all duration-200 cursor-pointer"
                   >
                     <LogOut size={15} />
                     Log out
@@ -243,7 +249,7 @@ const Header = ({ title, subtitle, onMenuClick }) => {
       {/* Page title row */}
       {title && (
         <div className="px-6 pb-4 pt-1">
-          <h2 className="text-xl font-bold tracking-tight text-white truncate">{title}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-heading truncate">{title}</h2>
           {subtitle && <p className="text-xs text-slate-500 mt-0.5 truncate">{subtitle}</p>}
         </div>
       )}

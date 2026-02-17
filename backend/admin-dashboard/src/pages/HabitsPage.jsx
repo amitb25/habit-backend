@@ -9,18 +9,7 @@ import { ListChecks, Flame, TrendingUp, Search } from "lucide-react";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
-
-const tooltipStyle = {
-  backgroundColor: "#141432",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "12px",
-  color: "#fff",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-  fontSize: "12px",
-  padding: "10px 14px",
-};
-
-const axisTickStyle = { fill: "#475569", fontSize: 11 };
+import { tooltipStyle, axisTickStyle } from "../utils/chartStyles";
 
 const HabitsPage = () => {
   const { onMenuClick } = useOutletContext();
@@ -47,7 +36,7 @@ const HabitsPage = () => {
   }, [page, search]);
 
   const columns = [
-    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
+    { key: "title", label: "Title", render: (r) => <span className="font-semibold text-heading">{r.title}</span> },
     { key: "user", label: "User", render: (r) => r.profiles?.name || "-" },
     { key: "category", label: "Category" },
     { key: "current_streak", label: "Streak", render: (r) => <span className="text-amber-400 font-semibold">{r.current_streak || 0}d</span> },
@@ -70,13 +59,13 @@ const HabitsPage = () => {
               <div
                 className="rounded-2xl p-6"
                 style={{
-                  background: "#111128",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
+                  boxShadow: "var(--shadow-md)",
                 }}
               >
                 <div className="mb-5">
-                  <h3 className="text-base font-bold text-white">Habits by Category</h3>
+                  <h3 className="text-base font-bold text-heading">Habits by Category</h3>
                   <p className="text-xs text-slate-500 mt-1">Distribution of habits across categories</p>
                 </div>
                 <ResponsiveContainer width="100%" height={260}>
@@ -87,7 +76,7 @@ const HabitsPage = () => {
                         <stop offset="100%" stopColor="#a855f7" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                     <XAxis dataKey="category" tick={axisTickStyle} axisLine={false} tickLine={false} />
                     <YAxis tick={axisTickStyle} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "rgba(139,92,246,0.2)", strokeWidth: 1 }} />
@@ -97,8 +86,8 @@ const HabitsPage = () => {
                       stroke="#a855f7"
                       strokeWidth={2}
                       fill="url(#areaGradHabits)"
-                      dot={{ r: 4, fill: "#111128", stroke: "#a855f7", strokeWidth: 2 }}
-                      activeDot={{ r: 6, fill: "#a855f7", stroke: "#111128", strokeWidth: 2 }}
+                      dot={{ r: 4, fill: "var(--chart-dot-fill)", stroke: "#a855f7", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "#a855f7", stroke: "var(--chart-dot-fill)", strokeWidth: 2 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -109,7 +98,7 @@ const HabitsPage = () => {
 
         <div
           className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <Search size={16} className="text-slate-600 shrink-0" />
           <input
@@ -117,7 +106,7 @@ const HabitsPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search habits by title..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
           />
         </div>
 

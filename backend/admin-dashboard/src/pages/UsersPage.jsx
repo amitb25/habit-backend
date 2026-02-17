@@ -84,7 +84,7 @@ const UsersPage = () => {
         >
           {row.name?.charAt(0)?.toUpperCase()}
         </div>
-        <span className="font-semibold text-white">{row.name}</span>
+        <span className="font-semibold text-heading">{row.name}</span>
       </div>
     )},
     { key: "email", label: "Email" },
@@ -100,7 +100,7 @@ const UsersPage = () => {
       <div className="flex items-center gap-1">
         <button
           onClick={(e) => askBlock(e, row)}
-          className={`p-2 rounded-xl transition-all duration-200 ${
+          className={`p-2 rounded-xl transition-all duration-200 cursor-pointer ${
             row.is_blocked
               ? "text-emerald-400 hover:bg-emerald-400/10"
               : "text-amber-400 hover:bg-amber-400/10"
@@ -111,7 +111,7 @@ const UsersPage = () => {
         </button>
         <button
           onClick={(e) => askDelete(e, row)}
-          className="p-2 rounded-xl text-rose-400 hover:bg-rose-400/10 transition-all duration-200"
+          className="p-2 rounded-xl text-rose-400 hover:bg-rose-400/10 transition-all duration-200 cursor-pointer"
           title="Delete"
         >
           <Trash2 size={15} />
@@ -126,7 +126,7 @@ const UsersPage = () => {
       <div className="p-6 space-y-5 animate-slideUp">
         <div
           className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <Search size={16} className="text-slate-600 shrink-0" />
           <input
@@ -134,7 +134,7 @@ const UsersPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search users by name or email..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
           />
         </div>
 

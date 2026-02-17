@@ -29,7 +29,6 @@ const AffirmationsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Confirm dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -72,7 +71,7 @@ const AffirmationsPage = () => {
   };
 
   const columns = [
-    { key: "text", label: "Affirmation", render: (r) => <span className="font-semibold text-white max-w-md truncate block">{r.text}</span> },
+    { key: "text", label: "Affirmation", render: (r) => <span className="font-semibold text-heading max-w-md truncate block">{r.text}</span> },
     { key: "user", label: "User", render: (r) => r.profiles?.name || "-" },
     { key: "category", label: "Category", render: (r) => {
       const cc = categoryColors[r.category] || { color: "#a78bfa", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.15)" };
@@ -84,7 +83,7 @@ const AffirmationsPage = () => {
     }},
     { key: "is_favorite", label: "Fav", render: (r) => r.is_favorite ? <span className="text-amber-400 font-semibold">Yes</span> : <span className="text-slate-600">-</span> },
     { key: "actions", label: "", render: (r) => (
-      <button onClick={(e) => askDelete(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+      <button onClick={(e) => askDelete(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200 cursor-pointer"><Trash2 size={14} /></button>
     )},
   ];
 
@@ -94,7 +93,7 @@ const AffirmationsPage = () => {
       <div className="p-6 space-y-5 animate-slideUp">
         <div
           className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
-          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
         >
           <Search size={16} className="text-slate-600 shrink-0" />
           <input
@@ -102,7 +101,7 @@ const AffirmationsPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search affirmations..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-body placeholder-slate-600 ml-3"
           />
         </div>
 
@@ -110,12 +109,12 @@ const AffirmationsPage = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => { setCategoryFilter(""); setPage(1); }}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-              !categoryFilter ? "text-white" : "text-slate-500 hover:text-slate-300"
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+              !categoryFilter ? "text-white" : "text-slate-500 hover-text-body"
             }`}
             style={!categoryFilter
               ? { background: "linear-gradient(135deg, #6366f1, #7c3aed)", boxShadow: "0 2px 10px rgba(99,102,241,0.25)" }
-              : { background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }
+              : { background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }
             }
           >
             All
@@ -126,12 +125,12 @@ const AffirmationsPage = () => {
               <button
                 key={c}
                 onClick={() => { setCategoryFilter(c); setPage(1); }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all duration-200 ${
-                  categoryFilter === c ? "" : "text-slate-500 hover:text-slate-300"
+                className={`px-4 py-2 rounded-xl text-sm font-medium capitalize transition-all duration-200 cursor-pointer ${
+                  categoryFilter === c ? "" : "text-slate-500 hover-text-body"
                 }`}
                 style={categoryFilter === c
                   ? { background: cc.bg, border: `1px solid ${cc.border}`, color: cc.color }
-                  : { background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }
+                  : { background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }
                 }
               >
                 {c}

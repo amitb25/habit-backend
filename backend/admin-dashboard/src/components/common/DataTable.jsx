@@ -6,9 +6,9 @@ const DataTable = ({ columns, data, onRowClick, emptyMessage = "No data found" }
       <div
         className="rounded-2xl p-16 text-center animate-fadeIn"
         style={{
-          background: "#111128",
-          border: "1px solid rgba(255,255,255,0.06)",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         <div
@@ -27,15 +27,15 @@ const DataTable = ({ columns, data, onRowClick, emptyMessage = "No data found" }
     <div
       className="rounded-2xl overflow-hidden animate-fadeIn"
       style={{
-        background: "#111128",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <tr style={{ background: "var(--table-header-bg)", borderBottom: "1px solid var(--border-subtle)" }}>
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -55,17 +55,17 @@ const DataTable = ({ columns, data, onRowClick, emptyMessage = "No data found" }
                   onRowClick ? "cursor-pointer" : ""
                 }`}
                 style={{
-                  borderBottom: idx < data.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                  borderBottom: idx < data.length - 1 ? "1px solid var(--table-row-border)" : "none",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = onRowClick ? "rgba(99,102,241,0.04)" : "rgba(255,255,255,0.02)";
+                  e.currentTarget.style.background = onRowClick ? "var(--table-row-hover)" : "var(--table-row-hover-alt)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
                 }}
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-5 py-4 text-sm text-slate-300 whitespace-nowrap">
+                  <td key={col.key} className="px-5 py-4 text-sm text-body whitespace-nowrap">
                     {col.render ? col.render(row) : row[col.key]}
                   </td>
                 ))}

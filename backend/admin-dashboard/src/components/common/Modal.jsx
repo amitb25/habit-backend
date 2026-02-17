@@ -8,7 +8,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }) => {
       {/* Overlay */}
       <div
         className="absolute inset-0"
-        style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
+        style={{ background: "var(--bg-overlay)", backdropFilter: "blur(8px)" }}
         onClick={onClose}
       />
 
@@ -16,9 +16,9 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }) => {
       <div
         className={`relative ${maxWidth} w-full mx-4 max-h-[90vh] overflow-y-auto rounded-2xl animate-scaleIn`}
         style={{
-          background: "#111128",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.05)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-medium)",
+          boxShadow: "var(--shadow-xl)",
         }}
       >
         {/* Top gradient accent */}
@@ -29,17 +29,17 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }) => {
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5">
-          <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+          <h3 className="text-lg font-bold text-heading tracking-tight">{title}</h3>
           <button
             onClick={onClose}
-            className="p-2 text-slate-500 hover:text-white transition-all duration-200 rounded-xl hover:bg-white/5"
+            className="p-2 text-slate-500 hover-text-heading transition-all duration-200 rounded-xl hover-bg-subtle cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Divider */}
-        <div className="mx-6 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="mx-6 h-px" style={{ background: "var(--border-subtle)" }} />
 
         {/* Body */}
         <div className="p-6">{children}</div>
