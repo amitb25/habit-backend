@@ -13,9 +13,13 @@ const affirmationRoutes = require("./routes/affirmationRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const exerciseRoutes = require("./routes/exerciseRoutes");
+const waterRoutes = require("./routes/waterRoutes");
+const sleepRoutes = require("./routes/sleepRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const { runPhase1Migration } = require("./migrations/phase1");
 const { runPhase2Migration } = require("./migrations/phase2_admin");
+const { runPhase3Migration } = require("./migrations/phase3_water_sleep");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +44,9 @@ app.use("/api/goals", goalRoutes);
 app.use("/api/affirmations", affirmationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/exercises", exerciseRoutes);
+app.use("/api/water", waterRoutes);
+app.use("/api/sleep", sleepRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve admin dashboard static files
 app.use("/admin", express.static(path.join(__dirname, "admin-dashboard", "dist")));
@@ -56,6 +63,9 @@ runPhase1Migration().catch((err) =>
 );
 runPhase2Migration().catch((err) =>
   console.error("[Phase2 Migration] Failed:", err.message)
+);
+runPhase3Migration().catch((err) =>
+  console.error("[Phase3 Migration] Failed:", err.message)
 );
 
 // Local development

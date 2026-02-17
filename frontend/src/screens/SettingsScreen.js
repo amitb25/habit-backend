@@ -20,7 +20,13 @@ import useShake from "../hooks/useShake";
 import {
   updateProfile as updateProfileAPI,
   changePassword as changePasswordAPI,
+  fetchNotificationPrefs,
+  updateNotificationPrefs,
 } from "../services/api";
+import {
+  requestNotificationPermissions,
+  rescheduleAll,
+} from "../services/notifications";
 
 const ACCENT_COLORS = [
   "#4078e0",
@@ -38,6 +44,8 @@ const TAB_OPTIONS = [
   { key: "habits", label: "Habits", icon: "flame" },
   { key: "finance", label: "Finance", icon: "cash" },
   { key: "goals", label: "Goals", icon: "trophy" },
+  { key: "water", label: "Water", icon: "water" },
+  { key: "sleep", label: "Sleep", icon: "bed" },
   { key: "workout", label: "Workout", icon: "barbell" },
   { key: "debts", label: "Debts", icon: "wallet" },
 ];
@@ -76,11 +84,60 @@ const SettingsScreen = ({ navigation }) => {
   const { shakeAnim: nameShake, triggerShake: shakeNameField } = useShake();
   const { shakeAnim: passwordShake, triggerShake: shakePasswordField } = useShake();
 
+  // Notification prefs
+  const [notifPrefs, setNotifPrefs] = useState({
+    water_enabled: true,
+    water_interval_hrs: 2,
+    sleep_enabled: true,
+    sleep_bedtime: "22:00",
+    habit_enabled: true,
+    habit_time: "08:00",
+    daily_task_enabled: true,
+    daily_task_time: "09:00",
+  });
+  const [notifLoading, setNotifLoading] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setName(profile.name || "");
     }
   }, [profile]);
+
+  // Load notification preferences
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotificationPrefs(user.id)
+        .then((res) => {
+          if (res.data?.data) setNotifPrefs(res.data.data);
+        })
+        .catch(() => {});
+    }
+  }, [user?.id]);
+
+  const handleNotifToggle = async (key) => {
+    const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+    setNotifPrefs(updated);
+    try {
+      await updateNotificationPrefs(user.id, { [key]: !notifPrefs[key] });
+      const granted = await requestNotificationPermissions();
+      if (granted) await rescheduleAll(updated);
+    } catch (e) {
+      showToast("Failed to update notification", "error");
+    }
+  };
+
+  const handleNotifTimeChange = async (key, value) => {
+    const updated = { ...notifPrefs, [key]: value };
+    setNotifPrefs(updated);
+    try {
+      await updateNotificationPrefs(user.id, { [key]: value });
+      const granted = await requestNotificationPermissions();
+      if (granted) await rescheduleAll(updated);
+      showToast("Reminder updated", "success");
+    } catch (e) {
+      showToast("Failed to update", "error");
+    }
+  };
 
   const handleSaveName = async () => {
     setNameError("");
@@ -627,6 +684,8 @@ const SettingsScreen = ({ navigation }) => {
             {[
               { key: "finance", label: "Finance", icon: "cash", color: "#2bb883" },
               { key: "goals", label: "Goals", icon: "trophy", color: "#e0a820" },
+              { key: "water", label: "Water", icon: "water", color: "#1e90ff" },
+              { key: "sleep", label: "Sleep", icon: "bed", color: "#9370db" },
               { key: "workout", label: "Workout", icon: "barbell", color: "#e06612" },
               { key: "debts", label: "Debts", icon: "wallet", color: "#5494e0" },
             ].map((tab, idx, arr) => (
@@ -658,6 +717,206 @@ const SettingsScreen = ({ navigation }) => {
         </Card>
 
 
+
+        {/* ── Notifications Section ── */}
+        <SectionHeader icon="notifications" title="Notifications" color="#e06612" />
+        <Card>
+          {/* Water Reminders */}
+          <SettingRow
+            icon="water"
+            iconColor="#1e90ff"
+            label="Water Reminders"
+            subtitle={notifPrefs.water_enabled ? `Every ${notifPrefs.water_interval_hrs}h (9AM-9PM)` : "Disabled"}
+            right={
+              <Switch
+                value={notifPrefs.water_enabled}
+                onValueChange={() => handleNotifToggle("water_enabled")}
+                trackColor={{ false: colors.switchTrackOff, true: "#1e90ff50" }}
+                thumbColor={notifPrefs.water_enabled ? "#1e90ff" : "#6b7280"}
+              />
+            }
+          />
+          {notifPrefs.water_enabled && (
+            <View style={{ paddingVertical: 10, paddingLeft: 48, borderBottomWidth: 1, borderBottomColor: colors.glassBorderLight }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>Interval (hours)</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {[1, 2, 3, 4].map((hrs) => (
+                  <TouchableOpacity
+                    key={hrs}
+                    onPress={() => handleNotifTimeChange("water_interval_hrs", hrs)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: notifPrefs.water_interval_hrs === hrs ? "#1e90ff" : colors.glassCard,
+                      alignItems: "center",
+                      borderWidth: 1,
+                      borderColor: notifPrefs.water_interval_hrs === hrs ? "#1e90ff" : colors.glassBorderStrong,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: notifPrefs.water_interval_hrs === hrs ? "#ffffff" : colors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {hrs}h
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Sleep Bedtime Reminder */}
+          <SettingRow
+            icon="bed"
+            iconColor="#9370db"
+            label="Bedtime Reminder"
+            subtitle={notifPrefs.sleep_enabled ? `30min before ${notifPrefs.sleep_bedtime}` : "Disabled"}
+            right={
+              <Switch
+                value={notifPrefs.sleep_enabled}
+                onValueChange={() => handleNotifToggle("sleep_enabled")}
+                trackColor={{ false: colors.switchTrackOff, true: "#9370db50" }}
+                thumbColor={notifPrefs.sleep_enabled ? "#9370db" : "#6b7280"}
+              />
+            }
+          />
+          {notifPrefs.sleep_enabled && (
+            <View style={{ paddingVertical: 10, paddingLeft: 48, borderBottomWidth: 1, borderBottomColor: colors.glassBorderLight }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>Bedtime</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {["21:00", "22:00", "23:00", "00:00"].map((time) => {
+                  const label = time === "00:00" ? "12 AM" : `${parseInt(time) > 12 ? parseInt(time) - 12 : parseInt(time)} ${parseInt(time) >= 12 ? "PM" : "AM"}`;
+                  return (
+                    <TouchableOpacity
+                      key={time}
+                      onPress={() => handleNotifTimeChange("sleep_bedtime", time)}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        backgroundColor: notifPrefs.sleep_bedtime === time ? "#9370db" : colors.glassCard,
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderColor: notifPrefs.sleep_bedtime === time ? "#9370db" : colors.glassBorderStrong,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: notifPrefs.sleep_bedtime === time ? "#ffffff" : colors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: "700",
+                        }}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Habit Reminder */}
+          <SettingRow
+            icon="flame"
+            iconColor="#e05555"
+            label="Habit Reminder"
+            subtitle={notifPrefs.habit_enabled ? `Daily at ${notifPrefs.habit_time}` : "Disabled"}
+            right={
+              <Switch
+                value={notifPrefs.habit_enabled}
+                onValueChange={() => handleNotifToggle("habit_enabled")}
+                trackColor={{ false: colors.switchTrackOff, true: "#e0555550" }}
+                thumbColor={notifPrefs.habit_enabled ? "#e05555" : "#6b7280"}
+              />
+            }
+          />
+          {notifPrefs.habit_enabled && (
+            <View style={{ paddingVertical: 10, paddingLeft: 48, borderBottomWidth: 1, borderBottomColor: colors.glassBorderLight }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>Remind at</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {["07:00", "08:00", "09:00", "10:00"].map((time) => (
+                  <TouchableOpacity
+                    key={time}
+                    onPress={() => handleNotifTimeChange("habit_time", time)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: notifPrefs.habit_time === time ? "#e05555" : colors.glassCard,
+                      alignItems: "center",
+                      borderWidth: 1,
+                      borderColor: notifPrefs.habit_time === time ? "#e05555" : colors.glassBorderStrong,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: notifPrefs.habit_time === time ? "#ffffff" : colors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {`${parseInt(time)} AM`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Daily Task Reminder */}
+          <SettingRow
+            icon="today"
+            iconColor="#4078e0"
+            label="Daily Task Reminder"
+            subtitle={notifPrefs.daily_task_enabled ? `Daily at ${notifPrefs.daily_task_time}` : "Disabled"}
+            borderBottom={false}
+            right={
+              <Switch
+                value={notifPrefs.daily_task_enabled}
+                onValueChange={() => handleNotifToggle("daily_task_enabled")}
+                trackColor={{ false: colors.switchTrackOff, true: "#4078e050" }}
+                thumbColor={notifPrefs.daily_task_enabled ? "#4078e0" : "#6b7280"}
+              />
+            }
+          />
+          {notifPrefs.daily_task_enabled && (
+            <View style={{ paddingVertical: 10, paddingLeft: 48 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>Remind at</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {["08:00", "09:00", "10:00", "11:00"].map((time) => (
+                  <TouchableOpacity
+                    key={time}
+                    onPress={() => handleNotifTimeChange("daily_task_time", time)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: notifPrefs.daily_task_time === time ? "#4078e0" : colors.glassCard,
+                      alignItems: "center",
+                      borderWidth: 1,
+                      borderColor: notifPrefs.daily_task_time === time ? "#4078e0" : colors.glassBorderStrong,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: notifPrefs.daily_task_time === time ? "#ffffff" : colors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {`${parseInt(time)} AM`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </Card>
 
         {/* Footer */}
         <View style={{ alignItems: "center", paddingVertical: 20 }}>

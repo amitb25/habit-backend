@@ -7,3 +7,5 @@ export { useFinance, FinanceProvider } from "./FinanceContext";
 export { useGoals, GoalsProvider } from "./GoalsContext";
 export { useAffirmations, AffirmationsProvider } from "./AffirmationsContext";
 export { useTabVisibility, TabVisibilityProvider } from "./TabVisibilityContext";
+export { useWater, WaterProvider } from "./WaterContext";
+export { useSleep, SleepProvider } from "./SleepContext";

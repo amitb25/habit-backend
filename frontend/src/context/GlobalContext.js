@@ -15,6 +15,8 @@ import { useFinance } from "./domains/FinanceContext";
 import { useGoals } from "./domains/GoalsContext";
 import { useAffirmations } from "./domains/AffirmationsContext";
 import { useTabVisibility } from "./domains/TabVisibilityContext";
+import { useWater } from "./domains/WaterContext";
+import { useSleep } from "./domains/SleepContext";
 
 export const useGlobal = () => {
   const auth = useAuth();
@@ -26,6 +28,8 @@ export const useGlobal = () => {
   const goals = useGoals();
   const affirmations = useAffirmations();
   const tabVis = useTabVisibility();
+  const water = useWater();
+  const sleep = useSleep();
 
   return {
     // Auth
@@ -97,6 +101,19 @@ export const useGlobal = () => {
     addCustomAffirmation: affirmations.addCustomAffirmation,
     toggleAffirmationFav: affirmations.toggleAffirmationFav,
     removeCustomAffirmation: affirmations.removeCustomAffirmation,
+
+    // Water
+    todayWater: water.todayWater,
+    loadWater: water.loadWater,
+    addGlass: water.addGlass,
+    removeGlass: water.removeGlass,
+
+    // Sleep
+    sleepLogs: sleep.sleepLogs,
+    sleepSummary: sleep.sleepSummary,
+    loadSleep: sleep.loadSleep,
+    addSleepLog: sleep.addSleepLog,
+    removeSleepLog: sleep.removeSleepLog,
 
     // Tab Visibility
     tabVisibility: tabVis.tabVisibility,

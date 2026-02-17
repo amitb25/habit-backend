@@ -29,12 +29,16 @@ import DebtsScreen from "./DebtsScreen";
 import ExercisesScreen from "./ExercisesScreen";
 import FinanceScreen from "./FinanceScreen";
 import GoalsScreen from "./GoalsScreen";
+import WaterScreen from "./WaterScreen";
+import SleepScreen from "./SleepScreen";
 
 const tabs = [
   { key: "dashboard", label: "Dashboard", icon: "grid-outline", iconActive: "grid", color: "#c09460" },
   { key: "habits", label: "Habits", icon: "flame-outline", iconActive: "flame", color: "#e05555" },
   { key: "finance", label: "Finance", icon: "cash-outline", iconActive: "cash", color: "#2bb883" },
   { key: "goals", label: "Goals", icon: "trophy-outline", iconActive: "trophy", color: "#e0a820" },
+  { key: "water", label: "Water", icon: "water-outline", iconActive: "water", color: "#1e90ff" },
+  { key: "sleep", label: "Sleep", icon: "bed-outline", iconActive: "bed", color: "#9370db" },
   { key: "workout", label: "Workout", icon: "barbell-outline", iconActive: "barbell", color: "#e06612" },
   { key: "debts", label: "Debts", icon: "wallet-outline", iconActive: "wallet", color: "#5494e0" },
 ];
@@ -304,6 +308,8 @@ const HomeScreen = ({ navigation }) => {
         {activeTab === "habits" && <HabitsScreen navigation={navigation} />}
         {activeTab === "finance" && <FinanceScreen />}
         {activeTab === "goals" && <GoalsScreen navigation={navigation} />}
+        {activeTab === "water" && <WaterScreen />}
+        {activeTab === "sleep" && <SleepScreen />}
         {activeTab === "workout" && <ExercisesScreen />}
         {activeTab === "debts" && <DebtsScreen navigation={navigation} />}
       </View>

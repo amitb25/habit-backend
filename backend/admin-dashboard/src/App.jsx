@@ -13,7 +13,6 @@ import HabitsPage from "./pages/HabitsPage";
 import DailyTasksPage from "./pages/DailyTasksPage";
 import FinancePage from "./pages/FinancePage";
 import GoalsPage from "./pages/GoalsPage";
-import InterviewsPage from "./pages/InterviewsPage";
 import AffirmationsPage from "./pages/AffirmationsPage";
 import SettingsPage from "./pages/SettingsPage";
 
@@ -42,7 +41,6 @@ const AppRoutes = () => {
         <Route path="daily-tasks" element={<DailyTasksPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="goals" element={<GoalsPage />} />
-        <Route path="interviews" element={<InterviewsPage />} />
         <Route path="affirmations" element={<AffirmationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

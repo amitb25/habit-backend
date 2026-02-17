@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Plus, Pencil, Trash2, Video, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, Search, X, Play } from "lucide-react";
 import Header from "../components/Layout/Header";
 import DataTable from "../components/common/DataTable";
 import Modal from "../components/common/Modal";
@@ -18,7 +18,7 @@ const levelColors = {
 
 const ExercisesPage = () => {
   const { onMenuClick } = useOutletContext();
-  const [tab, setTab] = useState("exercises");
+  const [tab, setTab] = useState("categories");
   const [categories, setCategories] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -33,6 +33,7 @@ const ExercisesPage = () => {
   const [editingCat, setEditingCat] = useState(null);
   const [editingEx, setEditingEx] = useState(null);
 
+  const [videoPreview, setVideoPreview] = useState(null); // { url, name }
   const [catForm, setCatForm] = useState({ name: "", icon: "", color: "#3b82f6", sort_order: 0 });
   const [exForm, setExForm] = useState({ category_id: "", name: "", level: "beginner", sets: 3, reps: "", rest: "30s", tip: "", video_url: "", sort_order: 0 });
 
@@ -137,7 +138,11 @@ const ExercisesPage = () => {
     { key: "sets", label: "Sets" },
     { key: "reps", label: "Reps" },
     { key: "rest", label: "Rest" },
-    { key: "video", label: "Video", render: (r) => r.video_url ? <Video size={16} className="text-blue-400" /> : <span className="text-slate-600">-</span> },
+    { key: "video", label: "Video", render: (r) => r.video_url ? (
+      <button onClick={(e) => { e.stopPropagation(); setVideoPreview({ url: r.video_url, name: r.name }); }} className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-xl transition-all duration-200" title="Play video">
+        <Play size={16} />
+      </button>
+    ) : <span className="text-slate-600">-</span> },
     { key: "actions", label: "Actions", render: (r) => (
       <div className="flex gap-1">
         <button onClick={(e) => { e.stopPropagation(); openExModal(r); }} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
@@ -152,7 +157,7 @@ const ExercisesPage = () => {
       <div className="p-6 space-y-5 animate-slideUp">
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "#0d0d22", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {["exercises", "categories"].map((t) => (
+          {["categories", "exercises"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -275,6 +280,35 @@ const ExercisesPage = () => {
           <button onClick={saveEx} className="w-full btn-primary py-2.5 text-sm font-bold">Save Exercise</button>
         </div>
       </Modal>
+
+      {/* Video Preview Modal */}
+      {videoPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
+          <div className="relative w-full max-w-3xl mx-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-lg">{videoPreview.name}</h3>
+              <button
+                onClick={() => setVideoPreview(null)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {/* Video Player */}
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <video
+                src={videoPreview.url}
+                controls
+                autoPlay
+                loop
+                className="w-full"
+                style={{ maxHeight: "70vh" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -20,9 +20,13 @@ import {
   GoalsProvider,
   AffirmationsProvider,
   TabVisibilityProvider,
+  WaterProvider,
+  SleepProvider,
 } from "./src/context/domains";
 import Toast from "./src/components/Toast";
 import LevelUpModal from "./src/components/LevelUpModal";
+import { requestNotificationPermissions, rescheduleAll } from "./src/services/notifications";
+import { fetchNotificationPrefs } from "./src/services/api";
 
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -138,7 +142,11 @@ function AppContent() {
   const checkSession = async () => {
     try {
       const stored = await AsyncStorage.getItem("hustlekit_user");
-      if (stored) setUser(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+        initNotifications(parsed.id);
+      }
     } catch (e) {}
     setChecking(false);
   };
@@ -146,6 +154,20 @@ function AppContent() {
   const handleLogin = async (userData) => {
     setUser(userData);
     await AsyncStorage.setItem("hustlekit_user", JSON.stringify(userData));
+    // Initialize notifications after login
+    initNotifications(userData.id);
+  };
+
+  const initNotifications = async (userId) => {
+    try {
+      const granted = await requestNotificationPermissions();
+      if (granted) {
+        const res = await fetchNotificationPrefs(userId);
+        if (res.data?.data) await rescheduleAll(res.data.data);
+      }
+    } catch (e) {
+      // Non-critical - notifications are optional
+    }
   };
 
   const handleLogout = async () => {
@@ -196,7 +218,11 @@ function AppContent() {
                 <FinanceProvider>
                   <GoalsProvider>
                     <AffirmationsProvider>
-                      <AppWithGamification />
+                      <WaterProvider>
+                        <SleepProvider>
+                          <AppWithGamification />
+                        </SleepProvider>
+                      </WaterProvider>
                     </AffirmationsProvider>
                   </GoalsProvider>
                 </FinanceProvider>

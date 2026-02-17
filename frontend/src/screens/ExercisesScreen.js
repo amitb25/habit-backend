@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../context/ThemeContext";
-import { exerciseData, workoutPlans, exerciseVideos } from "../data/exercises";
+import { fetchExercises, fetchWorkoutPlans, fetchExerciseVideos } from "../services/api";
 import ProgressBar from "../components/ProgressBar";
 import { getPercentage } from "../utils/helpers";
 
@@ -28,20 +29,45 @@ const levelLabels = {
 
 const ExercisesScreen = () => {
   const { colors, isDark, cardShadow } = useTheme();
-  const [tab, setTab] = useState("workouts"); // workouts | exercises
+  const [tab, setTab] = useState("workouts");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [levelFilter, setLevelFilter] = useState("all");
   const [videoExercise, setVideoExercise] = useState(null);
   const videoRef = useRef(null);
 
+  // Dynamic data from API
+  const [exerciseData, setExerciseData] = useState([]);
+  const [workoutPlans, setWorkoutPlans] = useState([]);
+  const [exerciseVideos, setExerciseVideos] = useState({});
+  const [loading, setLoading] = useState(true);
+
   // Daily tracking
   const [completedToday, setCompletedToday] = useState({});
   const todayKey = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
+    loadData();
     loadProgress();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [exRes, planRes, vidRes] = await Promise.all([
+        fetchExercises(),
+        fetchWorkoutPlans(),
+        fetchExerciseVideos(),
+      ]);
+      setExerciseData(exRes.data.data || []);
+      setWorkoutPlans(planRes.data.data || []);
+      setExerciseVideos(vidRes.data.data || {});
+    } catch (err) {
+      console.log("Failed to load exercises:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadProgress = async () => {
     try {
@@ -69,8 +95,16 @@ const ExercisesScreen = () => {
     saveProgress(updated);
   };
 
-  // Count today's completed workouts
   const completedWorkouts = workoutPlans.filter((w) => completedToday[`plan_${w.id}`]).length;
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={colors.accentBlue || "#4078e0"} />
+        <Text style={{ color: colors.textTertiary, marginTop: 12, fontSize: 14 }}>Loading exercises...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -520,9 +554,11 @@ const ExercisesScreen = () => {
                             <Text style={{ color: colors.accentYellow, fontSize: 12 }}>Rest: {ex.rest}</Text>
                           </View>
                         </View>
-                        <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 8, fontStyle: "italic" }}>
-                          {"\u{1F4A1}"} {ex.tip}
-                        </Text>
+                        {ex.tip ? (
+                          <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 8, fontStyle: "italic" }}>
+                            {"\u{1F4A1}"} {ex.tip}
+                          </Text>
+                        ) : null}
                       </View>
                     ))}
                   </View>

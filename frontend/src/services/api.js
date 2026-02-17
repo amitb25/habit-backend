@@ -124,6 +124,34 @@ export const toggleMilestone = (milestoneId) =>
 export const deleteMilestone = (milestoneId) =>
   api.delete(`/goals/milestones/${milestoneId}`);
 
+// ─── Exercises & Workouts ────────────────────
+export const fetchExercises = () => api.get("/exercises");
+export const fetchWorkoutPlans = () => api.get("/exercises/plans");
+export const fetchExerciseVideos = () => api.get("/exercises/videos");
+
+// ─── Water Intake ────────────────────────────
+export const fetchWaterIntake = (profileId, date) =>
+  api.get(`/water/${profileId}`, { params: { date } });
+export const addWaterGlass = (payload) => api.post("/water", payload);
+export const removeWaterGlass = (payload) => api.post("/water/remove", payload);
+export const updateWaterGoal = (payload) => api.put("/water/goal", payload);
+export const fetchWaterAnalytics = (profileId) =>
+  api.get(`/water/analytics/${profileId}`);
+
+// ─── Sleep ───────────────────────────────────
+export const fetchSleepLogs = (profileId) => api.get(`/sleep/${profileId}`);
+export const createSleepLog = (payload) => api.post("/sleep", payload);
+export const updateSleepLog = (id, payload) => api.put(`/sleep/${id}`, payload);
+export const deleteSleepLog = (id) => api.delete(`/sleep/${id}`);
+export const fetchSleepAnalytics = (profileId) =>
+  api.get(`/sleep/analytics/${profileId}`);
+
+// ─── Notification Preferences ────────────────
+export const fetchNotificationPrefs = (profileId) =>
+  api.get(`/notifications/${profileId}`);
+export const updateNotificationPrefs = (profileId, payload) =>
+  api.put(`/notifications/${profileId}`, payload);
+
 // ─── Custom Affirmations ─────────────────────
 export const fetchCustomAffirmations = (profileId) =>
   api.get(`/affirmations/${profileId}`);

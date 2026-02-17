@@ -501,7 +501,7 @@ const FinanceScreen = () => {
         onPress={() => setModalVisible(true)}
         style={{
           position: "absolute",
-          bottom: 20,
+          bottom: 80,
           right: 20,
           backgroundColor: "#1eac50",
           width: 58,

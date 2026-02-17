@@ -12,7 +12,6 @@ const { listHabits, getHabitStats } = require("../controllers/admin/adminHabitsC
 const { listDailyTasks } = require("../controllers/admin/adminDailyTasksController");
 const { getFinanceOverview, listTransactions } = require("../controllers/admin/adminFinanceController");
 const { listGoals, getGoalStats } = require("../controllers/admin/adminGoalsController");
-const { listInterviews, getInterviewStats } = require("../controllers/admin/adminInterviewsController");
 const { listAffirmations, deleteAffirmation } = require("../controllers/admin/adminAffirmationsController");
 const { getSettings, updateSettings } = require("../controllers/admin/adminSettingsController");
 
@@ -73,10 +72,6 @@ router.get("/finance/transactions", listTransactions);
 // Goals
 router.get("/goals", listGoals);
 router.get("/goals/stats", getGoalStats);
-
-// Interviews
-router.get("/interviews", listInterviews);
-router.get("/interviews/stats", getInterviewStats);
 
 // Affirmations
 router.get("/affirmations", listAffirmations);

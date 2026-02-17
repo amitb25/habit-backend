@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
-  Target, Wallet, BriefcaseBusiness, Settings,
+  Target, Wallet, Settings,
   ListChecks, Sparkles, LogOut, X, Zap, ChevronsLeft,
   ChevronDown,
 } from "lucide-react";
@@ -29,7 +29,6 @@ const navGroups = [
       { to: "/admin/daily-tasks", icon: ClipboardList, label: "Daily Tasks" },
       { to: "/admin/finance", icon: Wallet, label: "Finance" },
       { to: "/admin/goals", icon: Target, label: "Goals" },
-      // { to: "/admin/interviews", icon: BriefcaseBusiness, label: "Interviews" },
       { to: "/admin/affirmations", icon: Sparkles, label: "Affirmations" },
     ],
   },

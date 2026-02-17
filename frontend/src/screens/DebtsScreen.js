@@ -221,7 +221,7 @@ const DebtsScreen = ({ navigation }) => {
         onPress={() => setModalVisible(true)}
         style={{
           position: "absolute",
-          bottom: 20,
+          bottom: 80,
           right: 20,
           backgroundColor: "#e05555",
           width: 58,
