@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, Image, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, Image, TouchableOpacity, Dimensions, AppState } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
@@ -27,6 +27,8 @@ import Toast from "./src/components/Toast";
 import LevelUpModal from "./src/components/LevelUpModal";
 import { requestNotificationPermissions, rescheduleAll } from "./src/services/notifications";
 import { fetchNotificationPrefs } from "./src/services/api";
+import { getLockSettings } from "./src/services/appLock";
+import AppLockScreen from "./src/screens/AppLockScreen";
 
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -134,9 +136,32 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [isLocked, setIsLocked] = useState(false);
+  const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
     checkSession();
+  }, []);
+
+  // App lock: check on launch + listen for background→foreground
+  useEffect(() => {
+    const checkLock = async () => {
+      const settings = await getLockSettings();
+      if (settings.enabled) setIsLocked(true);
+    };
+    checkLock();
+
+    const sub = AppState.addEventListener("change", async (nextState) => {
+      if (
+        appStateRef.current.match(/background/) &&
+        nextState === "active"
+      ) {
+        const settings = await getLockSettings();
+        if (settings.enabled) setIsLocked(true);
+      }
+      appStateRef.current = nextState;
+    });
+    return () => sub.remove();
   }, []);
 
   const checkSession = async () => {
@@ -221,6 +246,9 @@ function AppContent() {
                       <WaterProvider>
                         <SleepProvider>
                           <AppWithGamification />
+                          {isLocked && (
+                            <AppLockScreen onUnlock={() => setIsLocked(false)} />
+                          )}
                         </SleepProvider>
                       </WaterProvider>
                     </AffirmationsProvider>

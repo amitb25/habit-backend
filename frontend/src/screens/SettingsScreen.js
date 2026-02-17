@@ -27,6 +27,13 @@ import {
   requestNotificationPermissions,
   rescheduleAll,
 } from "../services/notifications";
+import {
+  isBiometricAvailable,
+  getBiometricType,
+  getLockSettings,
+  saveLockSettings,
+} from "../services/appLock";
+import PinModal from "../components/PinModal";
 
 const ACCENT_COLORS = [
   "#4078e0",
@@ -84,6 +91,14 @@ const SettingsScreen = ({ navigation }) => {
   const { shakeAnim: nameShake, triggerShake: shakeNameField } = useShake();
   const { shakeAnim: passwordShake, triggerShake: shakePasswordField } = useShake();
 
+  // App Lock
+  const [lockEnabled, setLockEnabled] = useState(false);
+  const [lockType, setLockType] = useState("pin");
+  const [biometricAvail, setBiometricAvail] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState("Fingerprint");
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState("setup");
+
   // Notification prefs
   const [notifPrefs, setNotifPrefs] = useState({
     water_enabled: true,
@@ -113,6 +128,51 @@ const SettingsScreen = ({ navigation }) => {
         .catch(() => {});
     }
   }, [user?.id]);
+
+  // Load app lock settings
+  useEffect(() => {
+    (async () => {
+      const settings = await getLockSettings();
+      setLockEnabled(settings.enabled);
+      setLockType(settings.type);
+      const bioAvail = await isBiometricAvailable();
+      setBiometricAvail(bioAvail);
+      if (bioAvail) {
+        const type = await getBiometricType();
+        setBiometricLabel(type === "face" ? "Face ID" : "Fingerprint");
+      }
+    })();
+  }, []);
+
+  // ── App Lock Handlers ──
+  const handleLockToggle = () => {
+    setPinModalMode(lockEnabled ? "verify-disable" : "setup");
+    setShowPinModal(true);
+  };
+
+  const handleChangePin = () => {
+    setPinModalMode("change");
+    setShowPinModal(true);
+  };
+
+  const handleLockTypeChange = async (type) => {
+    setLockType(type);
+    await saveLockSettings({ enabled: true, type });
+  };
+
+  const handlePinSuccess = ({ action }) => {
+    setShowPinModal(false);
+    if (action === "enabled") {
+      setLockEnabled(true);
+      showToast("App Lock enabled", "success");
+    } else if (action === "disabled") {
+      setLockEnabled(false);
+      setLockType("pin");
+      showToast("App Lock disabled", "success");
+    } else if (action === "changed") {
+      showToast("PIN changed successfully", "success");
+    }
+  };
 
   const handleNotifToggle = async (key) => {
     const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
@@ -601,6 +661,149 @@ const SettingsScreen = ({ navigation }) => {
           </View>
         </Card>
 
+
+        {/* ── Security Section ── */}
+        <SectionHeader icon="shield-checkmark" title="Security" color="#e05555" />
+        <Card>
+          {/* App Lock Toggle */}
+          <SettingRow
+            icon="lock-closed"
+            iconColor="#e05555"
+            label="App Lock"
+            subtitle={lockEnabled ? "Enabled" : "Disabled"}
+            right={
+              <Switch
+                value={lockEnabled}
+                onValueChange={handleLockToggle}
+                trackColor={{ false: colors.switchTrackOff, true: "#e0555550" }}
+                thumbColor={lockEnabled ? "#e05555" : "#6b7280"}
+              />
+            }
+          />
+
+          {lockEnabled && (
+            <>
+              {/* Lock Type Selection */}
+              <View
+                style={{
+                  paddingVertical: 14,
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.glassBorderLight,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 14,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 11,
+                      backgroundColor: "#a855f712",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons name="key-outline" size={18} color="#a855f7" />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      style={{
+                        color: colors.textSubtitle,
+                        fontSize: 15,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Lock Method
+                    </Text>
+                    <Text
+                      style={{
+                        color: colors.textTertiary,
+                        fontSize: 11,
+                        marginTop: 2,
+                      }}
+                    >
+                      How to unlock the app
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: 8,
+                    paddingLeft: 48,
+                  }}
+                >
+                  {[
+                    { key: "pin", label: "PIN Only" },
+                    ...(biometricAvail
+                      ? [
+                          { key: "biometric", label: biometricLabel },
+                          { key: "both", label: "Both" },
+                        ]
+                      : []),
+                  ].map((opt) => (
+                    <TouchableOpacity
+                      key={opt.key}
+                      onPress={() => handleLockTypeChange(opt.key)}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        backgroundColor:
+                          lockType === opt.key ? "#e05555" : colors.glassCard,
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderColor:
+                          lockType === opt.key
+                            ? "#e05555"
+                            : colors.glassBorderStrong,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color:
+                            lockType === opt.key
+                              ? "#ffffff"
+                              : colors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: "700",
+                        }}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Change PIN */}
+              <SettingRow
+                icon="keypad-outline"
+                iconColor="#e0a820"
+                label="Change PIN"
+                subtitle="Update your lock PIN"
+                onPress={handleChangePin}
+                borderBottom={false}
+              />
+            </>
+          )}
+        </Card>
+
+        {/* PIN Modal (separate component — no re-render of SettingsScreen on keypress) */}
+        <PinModal
+          visible={showPinModal}
+          mode={pinModalMode}
+          lockType={lockType}
+          biometricAvail={biometricAvail}
+          biometricLabel={biometricLabel}
+          onSuccess={handlePinSuccess}
+          onCancel={() => setShowPinModal(false)}
+        />
 
         {/* ── App Preferences Section ── */}
         <SectionHeader icon="apps" title="App Preferences" color="#2bb883" />
