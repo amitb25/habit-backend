@@ -35,15 +35,7 @@ const UsersPage = () => {
     }
   };
 
-  const [searchTrigger, setSearchTrigger] = useState(0);
-
-  useEffect(() => { fetchUsers(); }, [page, searchTrigger]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-    setSearchTrigger((t) => t + 1);
-  };
+  useEffect(() => { fetchUsers(); }, [page, search]);
 
   const askBlock = (e, user) => {
     e.stopPropagation();
@@ -132,24 +124,19 @@ const UsersPage = () => {
     <>
       <Header title="Users" subtitle="Manage all registered users" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-5 animate-slideUp">
-        <form onSubmit={handleSearch} className="flex gap-3">
-          <div
-            className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
-            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <Search size={16} className="text-slate-600 shrink-0" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search users by name or email..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
-            />
-            <button type="submit" className="shrink-0 text-[11px] font-medium text-slate-500 px-2.5 py-1 rounded-lg hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              Search
-            </button>
-          </div>
-        </form>
+        <div
+          className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
+          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <Search size={16} className="text-slate-600 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search users by name or email..."
+            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+          />
+        </div>
 
         {loading ? (
           <Loader size={150} text="Loading Users..." />

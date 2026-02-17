@@ -3,10 +3,17 @@ const { supabase } = require("../../config/supabase");
 // GET /api/admin/workouts
 const listWorkouts = async (req, res, next) => {
   try {
-    const { data: plans, error } = await supabase
+    const { search } = req.query;
+
+    let query = supabase
       .from("workout_plans")
-      .select("*")
-      .order("sort_order", { ascending: true });
+      .select("*");
+
+    if (search) query = query.ilike("name", `%${search}%`);
+
+    query = query.order("sort_order", { ascending: true });
+
+    const { data: plans, error } = await query;
 
     if (error) throw { statusCode: 400, message: error.message };
 

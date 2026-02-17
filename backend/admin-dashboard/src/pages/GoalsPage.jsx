@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { Target } from "lucide-react";
+import { Target, Search } from "lucide-react";
 import Header from "../components/Layout/Header";
 import StatsCard from "../components/common/StatsCard";
 import DataTable from "../components/common/DataTable";
@@ -28,6 +28,7 @@ const GoalsPage = () => {
   const [stats, setStats] = useState(null);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -38,11 +39,12 @@ const GoalsPage = () => {
   useEffect(() => {
     setLoading(true);
     const params = { page, limit: 20 };
+    if (search) params.search = search;
     if (statusFilter) params.status = statusFilter;
     api.get("/goals", { params }).then((res) => { setGoals(res.data.data); setPagination(res.data.pagination); }).catch(() => {
       toast.error("Failed to load goals");
     }).finally(() => setLoading(false));
-  }, [page, statusFilter]);
+  }, [page, search, statusFilter]);
 
   const columns = [
     { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
@@ -94,6 +96,20 @@ const GoalsPage = () => {
             )}
           </div>
         )}
+
+        <div
+          className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
+          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <Search size={16} className="text-slate-600 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search goals by title..."
+            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+          />
+        </div>
 
         {/* Filter pills */}
         <div className="flex flex-wrap gap-2">

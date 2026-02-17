@@ -41,13 +41,14 @@ const getFinanceOverview = async (req, res, next) => {
 // GET /api/admin/finance/transactions
 const listTransactions = async (req, res, next) => {
   try {
-    const { type, page = 1, limit = 30 } = req.query;
+    const { search, type, page = 1, limit = 30 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
       .from("transactions")
       .select("*, profiles(name, email)", { count: "exact" });
 
+    if (search) query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
     if (type) query = query.eq("type", type);
 
     query = query.order("transaction_date", { ascending: false })

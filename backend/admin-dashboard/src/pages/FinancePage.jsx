@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, DollarSign, Search } from "lucide-react";
 import Header from "../components/Layout/Header";
 import StatsCard from "../components/common/StatsCard";
 import DataTable from "../components/common/DataTable";
@@ -28,6 +28,7 @@ const FinancePage = () => {
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +41,7 @@ const FinancePage = () => {
   useEffect(() => {
     setLoading(true);
     const params = { page, limit: 20 };
+    if (search) params.search = search;
     if (typeFilter) params.type = typeFilter;
     api.get("/finance/transactions", { params })
       .then((res) => { setTransactions(res.data.data); setPagination(res.data.pagination); })
@@ -47,7 +49,7 @@ const FinancePage = () => {
         toast.error("Failed to load transactions");
       })
       .finally(() => setLoading(false));
-  }, [page, typeFilter]);
+  }, [page, search, typeFilter]);
 
   const columns = [
     { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
@@ -119,7 +121,20 @@ const FinancePage = () => {
           </>
         )}
 
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
+            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <Search size={16} className="text-slate-600 shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search by title or category..."
+              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            />
+          </div>
           <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }} className="input-dark rounded-xl px-4 py-2.5 text-sm">
             <option value="">All Types</option>
             <option value="income">Income</option>

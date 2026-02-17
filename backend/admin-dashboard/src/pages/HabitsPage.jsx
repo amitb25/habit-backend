@@ -5,7 +5,7 @@ import Header from "../components/Layout/Header";
 import StatsCard from "../components/common/StatsCard";
 import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
-import { ListChecks, Flame, TrendingUp } from "lucide-react";
+import { ListChecks, Flame, TrendingUp, Search } from "lucide-react";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
@@ -28,11 +28,14 @@ const HabitsPage = () => {
   const [stats, setStats] = useState(null);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const params = { page, limit: 20 };
+    if (search) params.search = search;
     Promise.all([
-      api.get("/habits", { params: { page, limit: 20 } }),
+      api.get("/habits", { params }),
       api.get("/habits/stats"),
     ]).then(([habitsRes, statsRes]) => {
       setHabits(habitsRes.data.data);
@@ -41,7 +44,7 @@ const HabitsPage = () => {
     }).catch(() => {
       toast.error("Failed to load habits");
     }).finally(() => setLoading(false));
-  }, [page]);
+  }, [page, search]);
 
   const columns = [
     { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
@@ -103,6 +106,20 @@ const HabitsPage = () => {
             )}
           </>
         )}
+
+        <div
+          className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
+          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <Search size={16} className="text-slate-600 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search habits by title..."
+            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+          />
+        </div>
 
         {loading ? (
           <Loader size={150} text="Loading Habits..." />

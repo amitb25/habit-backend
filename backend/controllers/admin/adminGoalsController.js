@@ -3,13 +3,14 @@ const { supabase } = require("../../config/supabase");
 // GET /api/admin/goals
 const listGoals = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 30 } = req.query;
+    const { search, status, page = 1, limit = 30 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
       .from("goals")
       .select("*, profiles(name, email)", { count: "exact" });
 
+    if (search) query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
     if (status) query = query.eq("status", status);
 
     query = query.order("created_at", { ascending: false })

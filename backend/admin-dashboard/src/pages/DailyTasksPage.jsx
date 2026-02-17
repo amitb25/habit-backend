@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import { Search } from "lucide-react";
 import Header from "../components/Layout/Header";
 import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
@@ -12,13 +13,16 @@ const DailyTasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(true);
 
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/daily-tasks", { params: { date, page, limit: 30 } });
+      const params = { date, page, limit: 30 };
+      if (search) params.search = search;
+      const res = await api.get("/daily-tasks", { params });
       setTasks(res.data.data);
       setPagination(res.data.pagination);
     } catch (err) {
@@ -27,7 +31,7 @@ const DailyTasksPage = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchTasks(); }, [page, date]);
+  useEffect(() => { fetchTasks(); }, [page, date, search]);
 
   const columns = [
     { key: "title", label: "Title", render: (r) => <span className="font-semibold text-white">{r.title}</span> },
@@ -48,7 +52,20 @@ const DailyTasksPage = () => {
     <>
       <Header title="Daily Tasks" subtitle="View tasks by date" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-5 animate-slideUp">
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
+            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <Search size={16} className="text-slate-600 shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search tasks..."
+              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            />
+          </div>
           <input
             type="date"
             value={date}

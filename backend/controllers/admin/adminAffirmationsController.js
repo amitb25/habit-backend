@@ -3,13 +3,14 @@ const { supabase } = require("../../config/supabase");
 // GET /api/admin/affirmations
 const listAffirmations = async (req, res, next) => {
   try {
-    const { category, page = 1, limit = 30 } = req.query;
+    const { search, category, page = 1, limit = 30 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
       .from("custom_affirmations")
       .select("*, profiles(name, email)", { count: "exact" });
 
+    if (search) query = query.ilike("text", `%${search}%`);
     if (category) query = query.eq("category", category);
 
     query = query.order("created_at", { ascending: false })

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import Header from "../components/Layout/Header";
 import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
@@ -25,6 +25,7 @@ const AffirmationsPage = () => {
   const [affirmations, setAffirmations] = useState([]);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +38,7 @@ const AffirmationsPage = () => {
   const fetchData = async () => {
     setLoading(true);
     const params = { page, limit: 20 };
+    if (search) params.search = search;
     if (categoryFilter) params.category = categoryFilter;
     try {
       const res = await api.get("/affirmations", { params });
@@ -48,7 +50,7 @@ const AffirmationsPage = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [page, categoryFilter]);
+  useEffect(() => { fetchData(); }, [page, search, categoryFilter]);
 
   const askDelete = (e, aff) => {
     e.stopPropagation();
@@ -90,6 +92,20 @@ const AffirmationsPage = () => {
     <>
       <Header title="Affirmations" subtitle="User affirmations by category" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-5 animate-slideUp">
+        <div
+          className="flex items-center flex-1 max-w-xl rounded-full px-5 py-3"
+          style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <Search size={16} className="text-slate-600 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search affirmations..."
+            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+          />
+        </div>
+
         {/* Category filter pills */}
         <div className="flex flex-wrap gap-2">
           <button

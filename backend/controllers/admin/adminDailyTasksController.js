@@ -3,13 +3,14 @@ const { supabase } = require("../../config/supabase");
 // GET /api/admin/daily-tasks
 const listDailyTasks = async (req, res, next) => {
   try {
-    const { date, page = 1, limit = 30 } = req.query;
+    const { search, date, page = 1, limit = 30 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
       .from("daily_tasks")
       .select("*, profiles(name, email)", { count: "exact" });
 
+    if (search) query = query.or(`task_name.ilike.%${search}%,title.ilike.%${search}%`);
     if (date) query = query.eq("task_date", date);
 
     query = query.order("created_at", { ascending: false })

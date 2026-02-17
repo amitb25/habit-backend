@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import Header from "../components/Layout/Header";
 import Modal from "../components/common/Modal";
 import Loader from "../components/common/Loader";
@@ -18,6 +18,7 @@ const levelColors = {
 const WorkoutsPage = () => {
   const { onMenuClick } = useOutletContext();
   const [workouts, setWorkouts] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -34,13 +35,15 @@ const WorkoutsPage = () => {
   const fetchWorkouts = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/workouts");
+      const params = {};
+      if (search) params.search = search;
+      const res = await api.get("/workouts", { params });
       setWorkouts(res.data.data);
     } catch (err) { toast.error("Failed to load workouts"); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchWorkouts(); }, []);
+  useEffect(() => { fetchWorkouts(); }, [search]);
 
   const openModal = (w = null) => {
     setEditing(w);
@@ -96,8 +99,21 @@ const WorkoutsPage = () => {
     <>
       <Header title="Workout Plans" subtitle="Manage workout templates" onMenuClick={onMenuClick} />
       <div className="p-6 space-y-5 animate-slideUp">
-        <div className="flex justify-end">
-          <button onClick={() => openModal()} className="flex items-center gap-2 btn-primary px-4 py-2.5 text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="flex items-center flex-1 min-w-[200px] max-w-md rounded-full px-5 py-3"
+            style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <Search size={16} className="text-slate-600 shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search workouts..."
+              className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
+            />
+          </div>
+          <button onClick={() => openModal()} className="flex items-center gap-2 btn-primary px-4 py-2.5 text-sm font-medium ml-auto">
             <Plus size={16} /> Add Workout Plan
           </button>
         </div>
