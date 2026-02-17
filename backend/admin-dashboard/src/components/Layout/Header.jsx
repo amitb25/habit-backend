@@ -3,11 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { Menu, Search, Bell, Sun, MessageCircle, LayoutGrid, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
+const searchOptions = [
+  { label: "Dashboard", path: "/admin", keywords: ["dashboard", "home", "overview", "stats"] },
+  { label: "Users", path: "/admin/users", keywords: ["users", "members", "people", "accounts"] },
+  { label: "Exercises", path: "/admin/exercises", keywords: ["exercises", "workout", "fitness", "gym"] },
+  { label: "Workout Plans", path: "/admin/workouts", keywords: ["workouts", "plans", "training", "routine"] },
+  { label: "Habits", path: "/admin/habits", keywords: ["habits", "streak", "daily", "tracking"] },
+  { label: "Daily Tasks", path: "/admin/daily-tasks", keywords: ["daily", "tasks", "todo", "checklist"] },
+  { label: "Finance", path: "/admin/finance", keywords: ["finance", "money", "budget", "transactions", "income", "expense"] },
+  { label: "Goals", path: "/admin/goals", keywords: ["goals", "milestones", "progress", "target"] },
+  { label: "Affirmations", path: "/admin/affirmations", keywords: ["affirmations", "quotes", "motivation"] },
+  { label: "Settings", path: "/admin/settings", keywords: ["settings", "config", "preferences", "options"] },
+];
+
 const Header = ({ title, subtitle, onMenuClick }) => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
   const dropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -15,10 +31,48 @@ const Header = ({ title, subtitle, onMenuClick }) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowResults(false);
+      }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Cmd+K shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchRef.current?.querySelector("input")?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const filteredResults = searchQuery.trim()
+    ? searchOptions.filter((opt) => {
+        const q = searchQuery.toLowerCase();
+        return opt.label.toLowerCase().includes(q) || opt.keywords.some((k) => k.includes(q));
+      })
+    : [];
+
+  const handleSearchSelect = (path) => {
+    navigate(path);
+    setSearchQuery("");
+    setShowResults(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter" && filteredResults.length > 0) {
+      handleSearchSelect(filteredResults[0].path);
+    }
+    if (e.key === "Escape") {
+      setShowResults(false);
+      e.target.blur();
+    }
+  };
 
   return (
     <header
@@ -44,17 +98,22 @@ const Header = ({ title, subtitle, onMenuClick }) => {
         )}
 
         {/* Search Bar - wide pill shape like KORA */}
-        <div className="hidden md:block flex-1 max-w-2xl">
+        <div className="hidden md:block flex-1 max-w-2xl relative" ref={searchRef}>
           <div
             className="relative flex items-center w-full rounded-full px-5 py-3"
             style={{
               background: "#111128",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: `1px solid ${showResults && filteredResults.length > 0 ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}`,
+              transition: "border-color 0.2s ease",
             }}
           >
             <Search size={16} className="text-slate-600 shrink-0" />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
+              onFocus={() => setShowResults(true)}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Type to search..."
               className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3"
             />
@@ -68,6 +127,36 @@ const Header = ({ title, subtitle, onMenuClick }) => {
               ⌘K
             </span>
           </div>
+
+          {/* Search Results Dropdown */}
+          {showResults && searchQuery.trim() && (
+            <div
+              className="absolute top-full left-0 right-0 mt-2 rounded-2xl py-2 animate-slideUp overflow-hidden"
+              style={{
+                background: "#141432",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+              }}
+            >
+              {filteredResults.length > 0 ? (
+                filteredResults.map((opt) => (
+                  <button
+                    key={opt.path}
+                    onClick={() => handleSearchSelect(opt.path)}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+                  >
+                    <Search size={14} className="text-slate-600" />
+                    <span className="font-medium">{opt.label}</span>
+                    <span className="ml-auto text-[10px] text-slate-600 uppercase tracking-wider">Page</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-5 py-4 text-sm text-slate-600 text-center">
+                  No results for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right side icons */}

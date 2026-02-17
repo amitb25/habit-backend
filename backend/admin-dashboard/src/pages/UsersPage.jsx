@@ -35,12 +35,14 @@ const UsersPage = () => {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [page]);
+  const [searchTrigger, setSearchTrigger] = useState(0);
+
+  useEffect(() => { fetchUsers(); }, [page, searchTrigger]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
-    fetchUsers();
+    setSearchTrigger((t) => t + 1);
   };
 
   const askBlock = (e, user) => {

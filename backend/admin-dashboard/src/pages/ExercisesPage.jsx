@@ -43,24 +43,28 @@ const ExercisesPage = () => {
   const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'cat'|'ex', id, name }
 
   const fetchCategories = async () => {
-    const res = await api.get("/exercises/categories");
-    setCategories(res.data.data);
+    try {
+      const res = await api.get("/exercises/categories");
+      setCategories(res.data.data);
+    } catch (err) { toast.error("Failed to load categories"); }
   };
 
   const fetchExercises = async () => {
     setLoading(true);
-    const params = { page, limit: 30 };
-    if (search) params.search = search;
-    if (filterCat) params.category_id = filterCat;
-    if (filterLevel) params.level = filterLevel;
-    const res = await api.get("/exercises", { params });
-    setExercises(res.data.data);
-    setPagination(res.data.pagination);
-    setLoading(false);
+    try {
+      const params = { page, limit: 30 };
+      if (search) params.search = search;
+      if (filterCat) params.category_id = filterCat;
+      if (filterLevel) params.level = filterLevel;
+      const res = await api.get("/exercises", { params });
+      setExercises(res.data.data);
+      setPagination(res.data.pagination);
+    } catch (err) { toast.error("Failed to load exercises"); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchExercises(); }, [page, filterCat, filterLevel]);
+  useEffect(() => { fetchExercises(); }, [page, search, filterCat, filterLevel]);
 
   const openCatModal = (cat = null) => {
     setEditingCat(cat);
@@ -231,7 +235,7 @@ const ExercisesPage = () => {
                 style={{ background: "#111128", border: "1px solid rgba(255,255,255,0.06)" }}
               >
                 <Search size={16} className="text-slate-600 shrink-0" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && fetchExercises()} placeholder="Search exercises..." className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3" />
+                <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search exercises..." className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 placeholder-slate-600 ml-3" />
               </div>
               <select value={filterCat} onChange={(e) => { setFilterCat(e.target.value); setPage(1); }} className="input-dark rounded-xl px-3 py-2.5 text-sm">
                 <option value="">All Categories</option>
