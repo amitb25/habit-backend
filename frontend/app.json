@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "LifeStack",
-    "slug": "lifestack",
+    "slug": "hustlekit",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -31,10 +31,12 @@
       ],
       "@react-native-community/datetimepicker",
       "@react-native-google-signin/google-signin",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-local-authentication"
     ],
     "extra": {
       "googleWebClientId": "342254075468-2hr397kgc8s2jlde2ncd3av5uellmcng.apps.googleusercontent.com",
+      "googleAndroidClientId": "342254075468-scrnjioc3bk40vnarlnenla33coe4tje.apps.googleusercontent.com",
       "eas": {
         "projectId": "04705f68-fe34-414a-80aa-abff2457160c"
       }

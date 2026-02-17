@@ -55,6 +55,7 @@ const LoginScreen = ({ onLogin }) => {
     if (GoogleSignin) {
       GoogleSignin.configure({
         webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+        offlineAccess: true,
       });
     }
   }, []);

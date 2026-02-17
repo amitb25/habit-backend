@@ -148,10 +148,13 @@ const googleAuth = async (req, res, next) => {
       throw { statusCode: 400, message: "Google ID token is required" };
     }
 
-    // Verify the Google ID token
+    // Verify the Google ID token (accept both Web and Android client IDs)
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_WEB_CLIENT_ID,
+      audience: [
+        process.env.GOOGLE_WEB_CLIENT_ID,
+        process.env.GOOGLE_ANDROID_CLIENT_ID,
+      ].filter(Boolean),
     });
     const payload = ticket.getPayload();
     const { email, name, sub: googleId } = payload;
