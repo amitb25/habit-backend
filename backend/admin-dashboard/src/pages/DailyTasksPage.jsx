@@ -5,6 +5,7 @@ import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
+import toast from "react-hot-toast";
 
 const DailyTasksPage = () => {
   const { onMenuClick } = useOutletContext();
@@ -20,7 +21,9 @@ const DailyTasksPage = () => {
       const res = await api.get("/daily-tasks", { params: { date, page, limit: 30 } });
       setTasks(res.data.data);
       setPagination(res.data.pagination);
-    } catch (err) {}
+    } catch (err) {
+      toast.error("Failed to load daily tasks");
+    }
     finally { setLoading(false); }
   };
 

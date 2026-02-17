@@ -6,6 +6,7 @@ import DataTable from "../components/common/DataTable";
 import Modal from "../components/common/Modal";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
 
@@ -36,6 +37,10 @@ const ExercisesPage = () => {
   const [videoPreview, setVideoPreview] = useState(null); // { url, name }
   const [catForm, setCatForm] = useState({ name: "", icon: "", color: "#3b82f6", sort_order: 0 });
   const [exForm, setExForm] = useState({ category_id: "", name: "", level: "beginner", sets: 3, reps: "", rest: "30s", tip: "", video_url: "", sort_order: 0 });
+
+  // Confirm dialog
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'cat'|'ex', id, name }
 
   const fetchCategories = async () => {
     const res = await api.get("/exercises/categories");
@@ -73,14 +78,9 @@ const ExercisesPage = () => {
     } catch (err) { toast.error(err.response?.data?.message || "Failed"); }
   };
 
-  const deleteCat = async (id) => {
-    if (!confirm("Delete this category and all its exercises?")) return;
-    try {
-      await api.delete(`/exercises/categories/${id}`);
-      toast.success("Deleted");
-      fetchCategories();
-      fetchExercises();
-    } catch (err) { toast.error("Failed to delete"); }
+  const askDeleteCat = (cat) => {
+    setDeleteTarget({ type: "cat", id: cat.id, name: cat.name });
+    setConfirmOpen(true);
   };
 
   const openExModal = (ex = null) => {
@@ -99,14 +99,30 @@ const ExercisesPage = () => {
     } catch (err) { toast.error(err.response?.data?.message || "Failed"); }
   };
 
-  const deleteEx = async (e, id) => {
+  const askDeleteEx = (e, ex) => {
     e.stopPropagation();
-    if (!confirm("Delete this exercise?")) return;
+    setDeleteTarget({ type: "ex", id: ex.id, name: ex.name });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/exercises/${id}`);
-      toast.success("Deleted");
-      fetchExercises();
-    } catch (err) { toast.error("Failed to delete"); }
+      if (deleteTarget.type === "cat") {
+        await api.delete(`/exercises/categories/${deleteTarget.id}`);
+        toast.success(`Category "${deleteTarget.name}" deleted successfully`);
+        fetchCategories();
+        fetchExercises();
+      } else {
+        await api.delete(`/exercises/${deleteTarget.id}`);
+        toast.success(`Exercise "${deleteTarget.name}" deleted successfully`);
+        fetchExercises();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete");
+    }
+    setConfirmOpen(false);
+    setDeleteTarget(null);
   };
 
   const handleVideoUpload = () => {
@@ -146,7 +162,7 @@ const ExercisesPage = () => {
     { key: "actions", label: "Actions", render: (r) => (
       <div className="flex gap-1">
         <button onClick={(e) => { e.stopPropagation(); openExModal(r); }} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-        <button onClick={(e) => deleteEx(e, r.id)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+        <button onClick={(e) => askDeleteEx(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
       </div>
     )},
   ];
@@ -199,7 +215,7 @@ const ExercisesPage = () => {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openCatModal(cat)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-                    <button onClick={() => deleteCat(cat.id)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+                    <button onClick={() => askDeleteCat(cat)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
                   </div>
                 </div>
               ))}
@@ -280,6 +296,24 @@ const ExercisesPage = () => {
           <button onClick={saveEx} className="w-full btn-primary py-2.5 text-sm font-bold">Save Exercise</button>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeleteTarget(null); }}
+        onConfirm={handleConfirmDelete}
+        variant="delete"
+        title={
+          deleteTarget?.type === "cat"
+            ? `Delete category "${deleteTarget?.name}"?`
+            : `Delete exercise "${deleteTarget?.name}"?`
+        }
+        message={
+          deleteTarget?.type === "cat"
+            ? "This will delete the category and all exercises in it. This cannot be undone."
+            : "This exercise will be permanently deleted."
+        }
+        confirmText={deleteTarget?.type === "cat" ? "Delete Category" : "Delete Exercise"}
+      />
 
       {/* Video Preview Modal */}
       {videoPreview && (

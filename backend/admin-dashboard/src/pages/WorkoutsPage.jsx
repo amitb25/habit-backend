@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import Header from "../components/Layout/Header";
 import Modal from "../components/common/Modal";
 import Loader from "../components/common/Loader";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
 
@@ -26,6 +27,10 @@ const WorkoutsPage = () => {
   const [exReps, setExReps] = useState("");
   const [exRest, setExRest] = useState("30s");
 
+  // Confirm dialog
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
   const fetchWorkouts = async () => {
     setLoading(true);
     try {
@@ -44,7 +49,10 @@ const WorkoutsPage = () => {
   };
 
   const addExercise = () => {
-    if (!exName || !exReps) return;
+    if (!exName || !exReps) {
+      toast.error("Exercise name and reps are required");
+      return;
+    }
     setForm({ ...form, exercises: [...form.exercises, { name: exName, sets: exSets, reps: exReps, rest: exRest }] });
     setExName(""); setExReps("");
   };
@@ -54,23 +62,34 @@ const WorkoutsPage = () => {
   };
 
   const saveWorkout = async () => {
+    if (!form.name.trim()) {
+      toast.error("Workout name is required");
+      return;
+    }
     try {
       const payload = { ...form, exercises: form.exercises.map((e, i) => ({ exercise_name: e.name, sets: e.sets, reps: e.reps, rest: e.rest, sort_order: i + 1 })) };
       if (editing) await api.put(`/workouts/${editing.id}`, payload);
       else await api.post("/workouts", payload);
-      toast.success(editing ? "Updated" : "Created");
+      toast.success(editing ? "Workout updated successfully" : "Workout created successfully");
       setModal(false);
       fetchWorkouts();
-    } catch (err) { toast.error(err.response?.data?.message || "Failed"); }
+    } catch (err) { toast.error(err.response?.data?.message || "Failed to save workout"); }
   };
 
-  const deleteWorkout = async (id) => {
-    if (!confirm("Delete this workout plan?")) return;
+  const askDelete = (w) => {
+    setDeleteTarget(w);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/workouts/${id}`);
-      toast.success("Deleted");
+      await api.delete(`/workouts/${deleteTarget.id}`);
+      toast.success(`"${deleteTarget.name}" deleted successfully`);
       fetchWorkouts();
-    } catch (err) { toast.error("Failed to delete"); }
+    } catch (err) { toast.error(err.response?.data?.message || "Failed to delete workout"); }
+    setConfirmOpen(false);
+    setDeleteTarget(null);
   };
 
   return (
@@ -112,7 +131,7 @@ const WorkoutsPage = () => {
                     </div>
                     <div className="flex gap-1">
                       <button onClick={() => openModal(w)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all duration-200"><Pencil size={14} /></button>
-                      <button onClick={() => deleteWorkout(w.id)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+                      <button onClick={() => askDelete(w)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
                     </div>
                   </div>
                   <div className="space-y-0">
@@ -163,6 +182,16 @@ const WorkoutsPage = () => {
           <button onClick={saveWorkout} className="w-full btn-primary py-2.5 text-sm font-bold">Save Workout</button>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeleteTarget(null); }}
+        onConfirm={handleConfirmDelete}
+        variant="delete"
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="This workout plan and all its exercises will be permanently deleted."
+        confirmText="Delete Workout"
+      />
     </>
   );
 };

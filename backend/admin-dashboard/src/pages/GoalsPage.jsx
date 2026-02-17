@@ -8,6 +8,7 @@ import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
+import toast from "react-hot-toast";
 
 const COLORS = ["#6366f1", "#10b981", "#f43f5e", "#f59e0b", "#a855f7", "#ec4899", "#06b6d4"];
 
@@ -30,13 +31,17 @@ const GoalsPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.get("/goals/stats").then((res) => setStats(res.data.data)).catch(() => {}); }, []);
+  useEffect(() => { api.get("/goals/stats").then((res) => setStats(res.data.data)).catch(() => {
+    toast.error("Failed to load goals stats");
+  }); }, []);
 
   useEffect(() => {
     setLoading(true);
     const params = { page, limit: 20 };
     if (statusFilter) params.status = statusFilter;
-    api.get("/goals", { params }).then((res) => { setGoals(res.data.data); setPagination(res.data.pagination); }).finally(() => setLoading(false));
+    api.get("/goals", { params }).then((res) => { setGoals(res.data.data); setPagination(res.data.pagination); }).catch(() => {
+      toast.error("Failed to load goals");
+    }).finally(() => setLoading(false));
   }, [page, statusFilter]);
 
   const columns = [

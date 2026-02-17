@@ -8,6 +8,7 @@ import Pagination from "../components/common/Pagination";
 import { ListChecks, Flame, TrendingUp } from "lucide-react";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
+import toast from "react-hot-toast";
 
 const tooltipStyle = {
   backgroundColor: "#141432",
@@ -37,6 +38,8 @@ const HabitsPage = () => {
       setHabits(habitsRes.data.data);
       setPagination(habitsRes.data.pagination);
       setStats(statsRes.data.data);
+    }).catch(() => {
+      toast.error("Failed to load habits");
     }).finally(() => setLoading(false));
   }, [page]);
 

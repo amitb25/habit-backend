@@ -14,6 +14,7 @@ const SettingsPage = () => {
   useEffect(() => {
     api.get("/settings")
       .then((res) => setSettings(res.data.data || {}))
+      .catch(() => toast.error("Failed to load settings"))
       .finally(() => setLoading(false));
   }, []);
 

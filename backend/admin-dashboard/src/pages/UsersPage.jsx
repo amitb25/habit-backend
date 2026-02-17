@@ -5,6 +5,7 @@ import Header from "../components/Layout/Header";
 import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
 
@@ -16,6 +17,10 @@ const UsersPage = () => {
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Confirm dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // { type, user }
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -38,27 +43,38 @@ const UsersPage = () => {
     fetchUsers();
   };
 
-  const handleBlock = async (e, user) => {
+  const askBlock = (e, user) => {
     e.stopPropagation();
-    try {
-      const res = await api.put(`/users/${user.id}/block`);
-      toast.success(res.data.message);
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_blocked: !u.is_blocked } : u));
-    } catch (err) {
-      toast.error("Failed to update user");
-    }
+    setConfirmAction({ type: "block", user });
+    setConfirmOpen(true);
   };
 
-  const handleDelete = async (e, user) => {
+  const askDelete = (e, user) => {
     e.stopPropagation();
-    if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;
+    setConfirmAction({ type: "delete", user });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, user } = confirmAction;
+
     try {
-      await api.delete(`/users/${user.id}`);
-      toast.success("User deleted");
-      setUsers(prev => prev.filter(u => u.id !== user.id));
+      if (type === "block") {
+        const res = await api.put(`/users/${user.id}/block`);
+        toast.success(res.data.message || (user.is_blocked ? "User unblocked" : "User blocked"));
+        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_blocked: !u.is_blocked } : u));
+      } else if (type === "delete") {
+        await api.delete(`/users/${user.id}`);
+        toast.success(`"${user.name}" deleted successfully`);
+        setUsers(prev => prev.filter(u => u.id !== user.id));
+      }
     } catch (err) {
-      toast.error("Failed to delete user");
+      toast.error(err.response?.data?.message || `Failed to ${type} user`);
     }
+
+    setConfirmOpen(false);
+    setConfirmAction(null);
   };
 
   const columns = [
@@ -89,7 +105,7 @@ const UsersPage = () => {
     { key: "actions", label: "Actions", render: (row) => (
       <div className="flex items-center gap-1">
         <button
-          onClick={(e) => handleBlock(e, row)}
+          onClick={(e) => askBlock(e, row)}
           className={`p-2 rounded-xl transition-all duration-200 ${
             row.is_blocked
               ? "text-emerald-400 hover:bg-emerald-400/10"
@@ -100,7 +116,7 @@ const UsersPage = () => {
           <Ban size={15} />
         </button>
         <button
-          onClick={(e) => handleDelete(e, row)}
+          onClick={(e) => askDelete(e, row)}
           className="p-2 rounded-xl text-rose-400 hover:bg-rose-400/10 transition-all duration-200"
           title="Delete"
         >
@@ -146,6 +162,34 @@ const UsersPage = () => {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setConfirmAction(null); }}
+        onConfirm={handleConfirm}
+        variant={confirmAction?.type === "delete" ? "delete" : "block"}
+        title={
+          confirmAction?.type === "delete"
+            ? `Delete "${confirmAction?.user?.name}"?`
+            : confirmAction?.user?.is_blocked
+            ? `Unblock "${confirmAction?.user?.name}"?`
+            : `Block "${confirmAction?.user?.name}"?`
+        }
+        message={
+          confirmAction?.type === "delete"
+            ? "This will permanently delete this user and all their data. This cannot be undone."
+            : confirmAction?.user?.is_blocked
+            ? "This user will be able to access the app again."
+            : "This user will be blocked from accessing the app."
+        }
+        confirmText={
+          confirmAction?.type === "delete"
+            ? "Delete User"
+            : confirmAction?.user?.is_blocked
+            ? "Unblock"
+            : "Block User"
+        }
+      />
     </>
   );
 };

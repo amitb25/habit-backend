@@ -8,6 +8,7 @@ import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
 import api from "../api/adminApi";
+import toast from "react-hot-toast";
 
 const tooltipStyle = {
   backgroundColor: "#141432",
@@ -31,7 +32,9 @@ const FinancePage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/finance/overview").then((res) => setOverview(res.data.data)).catch(() => {});
+    api.get("/finance/overview").then((res) => setOverview(res.data.data)).catch(() => {
+      toast.error("Failed to load finance overview");
+    });
   }, []);
 
   useEffect(() => {
@@ -40,6 +43,9 @@ const FinancePage = () => {
     if (typeFilter) params.type = typeFilter;
     api.get("/finance/transactions", { params })
       .then((res) => { setTransactions(res.data.data); setPagination(res.data.pagination); })
+      .catch(() => {
+        toast.error("Failed to load transactions");
+      })
       .finally(() => setLoading(false));
   }, [page, typeFilter]);
 

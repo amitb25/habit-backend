@@ -5,6 +5,7 @@ import Header from "../components/Layout/Header";
 import DataTable from "../components/common/DataTable";
 import Pagination from "../components/common/Pagination";
 import Loader from "../components/common/Loader";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import api from "../api/adminApi";
 import toast from "react-hot-toast";
 
@@ -27,6 +28,10 @@ const AffirmationsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Confirm dialog
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
   const categories = ["confidence", "career", "wealth", "health", "gratitude", "discipline", "desi", "personal"];
 
   const fetchData = async () => {
@@ -37,20 +42,31 @@ const AffirmationsPage = () => {
       const res = await api.get("/affirmations", { params });
       setAffirmations(res.data.data);
       setPagination(res.data.pagination);
-    } catch (err) {}
+    } catch (err) {
+      toast.error("Failed to load affirmations");
+    }
     finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [page, categoryFilter]);
 
-  const handleDelete = async (e, id) => {
+  const askDelete = (e, aff) => {
     e.stopPropagation();
-    if (!confirm("Delete this affirmation?")) return;
+    setDeleteTarget(aff);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/affirmations/${id}`);
-      toast.success("Deleted");
+      await api.delete(`/affirmations/${deleteTarget.id}`);
+      toast.success("Affirmation deleted successfully");
       fetchData();
-    } catch (err) { toast.error("Failed to delete"); }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete affirmation");
+    }
+    setConfirmOpen(false);
+    setDeleteTarget(null);
   };
 
   const columns = [
@@ -66,7 +82,7 @@ const AffirmationsPage = () => {
     }},
     { key: "is_favorite", label: "Fav", render: (r) => r.is_favorite ? <span className="text-amber-400 font-semibold">Yes</span> : <span className="text-slate-600">-</span> },
     { key: "actions", label: "", render: (r) => (
-      <button onClick={(e) => handleDelete(e, r.id)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
+      <button onClick={(e) => askDelete(e, r)} className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-200"><Trash2 size={14} /></button>
     )},
   ];
 
@@ -117,6 +133,16 @@ const AffirmationsPage = () => {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setDeleteTarget(null); }}
+        onConfirm={handleConfirmDelete}
+        variant="delete"
+        title="Delete Affirmation?"
+        message={deleteTarget ? `"${deleteTarget.text?.slice(0, 60)}${deleteTarget.text?.length > 60 ? '...' : ''}" will be permanently deleted.` : "This affirmation will be permanently deleted."}
+        confirmText="Delete"
+      />
     </>
   );
 };
